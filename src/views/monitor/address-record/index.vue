@@ -108,12 +108,6 @@
           @current-change="handleCurrentChange"
         />
       </div>
-      
-      <!-- 操作说明 -->
-      <div class="address-record-tips">
-        <p>仅记录客户的添加/删除监听地址的操作</p>
-        <p>操作时间格式：日期/时间 记录，并精确到秒</p>
-      </div>
     </div>
   </div>
 </template>
@@ -249,17 +243,5 @@ onMounted(() => {
 <style scoped>
 .address-record-container {
   padding: 20px;
-}
-
-.address-record-tips {
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #f8f8f8;
-  border-radius: 4px;
-  color: #606266;
-}
-
-.address-record-tips p {
-  margin: 8px 0;
 }
 </style> 

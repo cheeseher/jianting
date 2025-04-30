@@ -207,16 +207,6 @@
           </div>
         </div>
       </el-dialog>
-      
-      <!-- 地址详情说明 -->
-      <div class="address-info-tips">
-        <p><strong>地址：</strong> 监听地址</p>
-        <p><strong>公链：</strong> 监听地址所属公链</p>
-        <p><strong>主币余额：</strong> 该地址的主币余额（包含手续费）</p>
-        <p><strong>代币余额：</strong> 该地址全部代币的剩余金额</p>
-        <p><strong>添加时间：</strong> 监听地址的添加时间（日期）</p>
-        <p><strong>更新时间：</strong> 每次监听到该地址变化时更新</p>
-      </div>
     </div>
   </div>
 </template>
@@ -637,17 +627,5 @@ onMounted(() => {
   text-align: center;
   padding: 20px;
   color: #909399;
-}
-
-.address-info-tips {
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #f8f8f8;
-  border-radius: 4px;
-  color: #606266;
-}
-
-.address-info-tips p {
-  margin: 8px 0;
 }
 </style> 
