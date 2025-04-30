@@ -1,0 +1,780 @@
+<template>
+  <div class="page-container">
+    <div class="customer-list-container">
+      <!-- 搜索区域 -->
+      <el-card shadow="never" class="card-container">
+        <div class="search-container">
+          <div class="search-item">
+            <span class="search-label">客户：</span>
+            <el-input 
+              v-model="searchForm.keyword" 
+              placeholder="输入客户ID/名称" 
+              clearable 
+              style="width: 220px" 
+            />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">状态：</span>
+            <el-select 
+              v-model="searchForm.status" 
+              placeholder="全部" 
+              clearable 
+              class="filter-dropdown"
+            >
+              <el-option label="启用" value="1" />
+              <el-option label="禁用" value="0" />
+            </el-select>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">时间：</span>
+            <el-date-picker
+              v-model="searchForm.timeRange"
+              type="datetimerange"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              :default-time="defaultTime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              :shortcuts="dateShortcuts"
+              style="width: 380px"
+            />
+          </div>
+          
+          <div class="search-buttons">
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="resetSearch">重置</el-button>
+          </div>
+        </div>
+      </el-card>
+      
+      <!-- 操作工具栏 -->
+      <div class="table-toolbar">
+        <div class="left">
+          <el-button type="primary" @click="handleAdd">添加</el-button>
+          <el-button @click="handleExport">导出</el-button>
+        </div>
+        
+        <div class="right">
+          <el-dropdown @command="handleCommand">
+            <el-button>
+              <span>批量操作</span>
+              <el-icon class="el-icon--right"><arrow-down /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="batchEnable">批量启用</el-dropdown-item>
+                <el-dropdown-item command="batchDisable">批量禁用</el-dropdown-item>
+                <el-dropdown-item command="batchDelete" divided>批量删除</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+      
+      <!-- 表格 -->
+      <el-table
+        ref="tableRef"
+        v-loading="tableLoading"
+        :data="tableData"
+        border
+        stripe
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="客户ID" min-width="120" />
+        <el-table-column prop="name" label="客户名称" min-width="120" />
+        <el-table-column label="监听地址数量" min-width="120">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openAddressDialog(row)">
+              {{ row.monitorAddressCount }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="callbackUrl" label="回调地址" min-width="180" show-overflow-tooltip />
+        <el-table-column label="状态" width="80">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.status"
+              @change="(val: boolean) => handleStatusChange(row, val)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" min-width="160" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="danger" @click="confirmDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <!-- 调试信息 -->
+      <div class="debug-info" v-if="tableData.length === 0 && !tableLoading">
+        <el-alert
+          title="表格数据为空"
+          type="warning"
+          description="未能加载客户列表数据，请检查API调用是否正常"
+          show-icon
+          :closable="false"
+        />
+      </div>
+      
+      <div class="debug-info" v-if="tableLoading">
+        <p>正在加载数据...</p>
+      </div>
+      
+      <div class="debug-info" v-if="tableData.length > 0">
+        <p>已加载 {{ tableData.length }} 条记录</p>
+      </div>
+      
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.pageNum"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+      
+      <!-- 添加/编辑客户弹窗 -->
+      <el-dialog
+        v-model="dialogVisible"
+        :title="dialogType === 'add' ? '添加客户' : '编辑客户'"
+        width="500px"
+        @closed="resetForm"
+      >
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="100px"
+          label-position="right"
+        >
+          <el-form-item label="客户名称" prop="name" required>
+            <el-input v-model="form.name" placeholder="请输入客户名称" />
+          </el-form-item>
+          
+          <el-form-item label="回调地址" prop="callbackUrl" required>
+            <el-input v-model="form.callbackUrl" placeholder="请输入回调地址" />
+          </el-form-item>
+          
+          <el-form-item label="状态" prop="status">
+            <el-switch v-model="form.status" />
+          </el-form-item>
+        </el-form>
+        
+        <template #footer>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitForm" :loading="submitLoading">
+            确定
+          </el-button>
+        </template>
+      </el-dialog>
+      
+      <!-- 监听地址弹窗 -->
+      <el-dialog
+        v-model="addressDialogVisible"
+        :title="`[${currentCustomer.id}]监听地址`"
+        width="800px"
+      >
+        <div class="address-search-bar">
+          <div class="search-input">
+            <span class="label">监听地址</span>
+            <el-input v-model="addressSearch" placeholder="请输入" style="width: 220px" />
+          </div>
+          <div class="search-buttons">
+            <el-button type="primary" @click="searchAddresses">搜索</el-button>
+            <el-button @click="resetAddressSearch">重置</el-button>
+          </div>
+        </div>
+        
+        <el-table :data="addressList" border stripe style="margin-top: 16px;">
+          <el-table-column label="序号" type="index" width="70" align="center" />
+          <el-table-column prop="address" label="监听地址" min-width="160" />
+          <el-table-column prop="addTime" label="添加时间" min-width="160" />
+          <el-table-column label="操作" width="100" align="center">
+            <template #default="{ row }">
+              <el-button link type="danger" @click="confirmDeleteAddress(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        
+        <div class="pagination-container" style="margin-top: 16px;">
+          <el-pagination
+            v-model:current-page="addressPagination.pageNum"
+            v-model:page-size="addressPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="addressPagination.total"
+            @size-change="handleAddressSizeChange"
+            @current-change="handleAddressCurrentChange"
+          />
+        </div>
+      </el-dialog>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
+import type { Customer } from '@/types/customer'
+import { getCustomerList, addCustomer, updateCustomer, deleteCustomer } from '@/api/customer'
+
+// 搜索表单
+const searchForm = reactive({
+  keyword: '',
+  status: '',
+  timeRange: [] as [string, string] | []
+})
+
+// 日期快捷选项
+const dateShortcuts = [
+  {
+    text: '最近一周',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+      return [start, end]
+    }
+  },
+  {
+    text: '最近一个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+      return [start, end]
+    }
+  },
+  {
+    text: '最近三个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+      return [start, end]
+    }
+  }
+]
+
+// 默认时间
+const defaultTime = [
+  new Date(2000, 1, 1, 0, 0, 0),
+  new Date(2000, 1, 1, 23, 59, 59)
+]
+
+// 表格数据
+const tableData = ref<Customer[]>([])
+const tableLoading = ref(false)
+const selectedRows = ref<Customer[]>([])
+
+// 分页
+const pagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 表单相关
+const dialogVisible = ref(false)
+const dialogType = ref<'add' | 'edit'>('add')
+const formRef = ref<FormInstance>()
+const submitLoading = ref(false)
+
+// 表单数据
+const form = reactive({
+  id: '',
+  name: '',
+  callbackUrl: '',
+  status: true
+})
+
+// 表单校验规则
+const rules = {
+  name: [
+    { required: true, message: '请输入客户名称', trigger: 'blur' },
+    { min: 2, max: 50, message: '长度应为2-50个字符', trigger: 'blur' }
+  ],
+  callbackUrl: [
+    { required: true, message: '请输入回调地址', trigger: 'blur' },
+    { 
+      pattern: /^https?:\/\/.+/, 
+      message: '回调地址必须以http://或https://开头', 
+      trigger: 'blur' 
+    }
+  ]
+}
+
+// 监听地址弹窗相关
+const addressDialogVisible = ref(false)
+const currentCustomer = ref<Customer>({} as Customer)
+const addressSearch = ref('')
+const addressList = ref<any[]>([])
+const addressPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 获取表格数据
+const fetchTableData = async () => {
+  tableLoading.value = true
+  tableData.value = [] // 清空现有数据
+  
+  try {
+    let params = {
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+      keyword: searchForm.keyword,
+      status: searchForm.status,
+      timeRange: searchForm.timeRange.length ? searchForm.timeRange : undefined
+    }
+    
+    console.log('请求参数:', params) // 添加日志
+    
+    const response = await getCustomerList(params)
+    console.log('API返回数据:', response) // 添加日志
+    
+    if (response && response.list && Array.isArray(response.list)) {
+      tableData.value = response.list
+      pagination.total = response.total
+    } else {
+      console.error('返回数据格式不正确:', response)
+      ElMessage.error('数据格式错误')
+    }
+  } catch (error) {
+    console.error('获取客户列表失败', error)
+    ElMessage.error('获取客户列表失败')
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+// 搜索
+const handleSearch = () => {
+  pagination.pageNum = 1
+  fetchTableData()
+}
+
+// 重置搜索
+const resetSearch = () => {
+  searchForm.keyword = ''
+  searchForm.status = ''
+  searchForm.timeRange = []
+  pagination.pageNum = 1
+  fetchTableData()
+}
+
+// 分页事件处理
+const handleSizeChange = (size: number) => {
+  pagination.pageSize = size
+  fetchTableData()
+}
+
+const handleCurrentChange = (current: number) => {
+  pagination.pageNum = current
+  fetchTableData()
+}
+
+// 表格选择事件
+const handleSelectionChange = (rows: Customer[]) => {
+  selectedRows.value = rows
+}
+
+// 添加客户
+const handleAdd = () => {
+  dialogType.value = 'add'
+  resetForm()
+  dialogVisible.value = true
+}
+
+// 编辑客户
+const handleEdit = (row: Customer) => {
+  dialogType.value = 'edit'
+  Object.assign(form, row)
+  dialogVisible.value = true
+}
+
+// 删除客户
+const handleDelete = async (row: Customer) => {
+  try {
+    await deleteCustomer(row.id)
+    ElMessage.success('删除成功')
+    fetchTableData()
+  } catch (error) {
+    console.error('删除失败', error)
+    ElMessage.error('删除失败')
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请至少选择一条记录')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm('确认批量删除选中的客户?', '提示', {
+      type: 'warning'
+    })
+    
+    const ids = selectedRows.value.map(row => row.id)
+    const promises = ids.map(id => deleteCustomer(id))
+    
+    await Promise.all(promises)
+    ElMessage.success('批量删除成功')
+    fetchTableData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除失败', error)
+      ElMessage.error('批量删除失败')
+    }
+  }
+}
+
+// 导出数据
+const handleExport = () => {
+  ElMessage.success('导出成功')
+}
+
+// 下拉菜单命令处理
+const handleCommand = (command: string) => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请至少选择一条记录')
+    return
+  }
+  
+  if (command === 'batchEnable') {
+    confirmBatchEnable()
+  } else if (command === 'batchDisable') {
+    confirmBatchDisable()
+  } else if (command === 'batchDelete') {
+    confirmBatchDelete()
+  }
+}
+
+// 批量删除确认
+const confirmBatchDelete = () => {
+  ElMessageBox.confirm(
+    `确定要删除这${selectedRows.value.length}条客户的全部数据吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      handleBatchDelete()
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 批量启用确认
+const confirmBatchEnable = () => {
+  ElMessageBox.confirm(
+    `确定要启用这${selectedRows.value.length}条客户数据吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '启用',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--primary',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      ElMessage.success('批量启用成功')
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 批量禁用确认
+const confirmBatchDisable = () => {
+  ElMessageBox.confirm(
+    `确定要禁用这${selectedRows.value.length}条客户数据吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '禁用',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--primary',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      ElMessage.success('批量禁用成功')
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 状态变更处理
+const handleStatusChange = (row: Customer, value: boolean) => {
+  if (value) {
+    confirmEnable(row);
+  } else {
+    confirmDisable(row);
+  }
+}
+
+// 确认删除客户
+const confirmDelete = (row: Customer) => {
+  ElMessageBox.confirm(
+    `确定要删除${row.id} (${row.name})的全部数据吗？删除后客户的监听地址也会一并清除。`,
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      handleDelete(row)
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 确认禁用客户
+const confirmDisable = (row: Customer) => {
+  ElMessageBox.confirm(
+    `确定要将${row.id} (${row.name})的状态设置为禁用吗？禁用后，客户不会收到任何回调信息。`,
+    '系统提示',
+    {
+      confirmButtonText: '禁用',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--primary',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      ElMessage.success('禁用成功')
+    })
+    .catch(() => {
+      // 用户点击取消，恢复开关状态
+      row.status = true
+    })
+}
+
+// 确认启用客户
+const confirmEnable = (row: Customer) => {
+  ElMessageBox.confirm(
+    `确定要将${row.id} (${row.name})的状态设置为启用吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '启用',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--primary',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      ElMessage.success('启用成功')
+    })
+    .catch(() => {
+      // 用户点击取消，恢复开关状态
+      row.status = false
+    })
+}
+
+// 提交表单
+const submitForm = async () => {
+  if (!formRef.value) return
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    submitLoading.value = true
+    try {
+      if (dialogType.value === 'add') {
+        await addCustomer({
+          name: form.name,
+          callbackUrl: form.callbackUrl,
+          status: form.status,
+          monitorAddressCount: 0
+        })
+        ElMessage.success('添加成功')
+      } else {
+        await updateCustomer({
+          id: form.id,
+          name: form.name,
+          callbackUrl: form.callbackUrl,
+          status: form.status,
+          monitorAddressCount: 0,
+          updateTime: ''
+        })
+        ElMessage.success('更新成功')
+      }
+      
+      dialogVisible.value = false
+      fetchTableData()
+    } catch (error) {
+      console.error('操作失败', error)
+      ElMessage.error('操作失败')
+    } finally {
+      submitLoading.value = false
+    }
+  })
+}
+
+// 重置表单
+const resetForm = () => {
+  form.id = ''
+  form.name = ''
+  form.callbackUrl = ''
+  form.status = true
+  
+  if (formRef.value) {
+    formRef.value.resetFields()
+  }
+}
+
+// 打开监听地址弹窗
+const openAddressDialog = (row: Customer) => {
+  currentCustomer.value = row
+  addressDialogVisible.value = true
+  fetchAddressList()
+}
+
+// 获取监听地址列表数据
+const fetchAddressList = () => {
+  // 模拟数据 - 实际项目中应该调用API
+  const mockData = Array.from({ length: 20 }, (_, index) => ({
+    id: `addr_${index + 1}`,
+    address: `0sokngvoin13g${index}`,
+    addTime: '2024-09-09 23:59:59'
+  }))
+  
+  addressList.value = mockData.slice(
+    (addressPagination.pageNum - 1) * addressPagination.pageSize,
+    addressPagination.pageNum * addressPagination.pageSize
+  )
+  addressPagination.total = mockData.length
+}
+
+// 搜索监听地址
+const searchAddresses = () => {
+  addressPagination.pageNum = 1
+  fetchAddressList()
+}
+
+// 重置监听地址搜索
+const resetAddressSearch = () => {
+  addressSearch.value = ''
+  addressPagination.pageNum = 1
+  fetchAddressList()
+}
+
+// 监听地址分页事件处理
+const handleAddressSizeChange = (size: number) => {
+  addressPagination.pageSize = size
+  fetchAddressList()
+}
+
+const handleAddressCurrentChange = (current: number) => {
+  addressPagination.pageNum = current
+  fetchAddressList()
+}
+
+// 删除监听地址
+const deleteAddress = (row: any) => {
+  ElMessage.success('删除成功')
+  fetchAddressList()
+}
+
+// 确认删除监听地址
+const confirmDeleteAddress = (row: any) => {
+  ElMessageBox.confirm(
+    '删除后，该客户将无法收到此地址的交易通知。',
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      deleteAddress(row)
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 生命周期
+onMounted(() => {
+  try {
+    fetchTableData()
+  } catch (error) {
+    console.error('初始化数据失败', error)
+    ElMessage.error('初始化数据失败，请刷新页面重试')
+    tableLoading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.customer-list-container {
+  padding: 20px;
+}
+
+.address-search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.search-input .label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+}
+
+.search-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.debug-info {
+  margin: 16px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+</style> 

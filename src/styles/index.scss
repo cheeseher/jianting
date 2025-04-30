@@ -1,0 +1,290 @@
+// 全局样式
+
+/* 清除默认样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 全局样式重置 */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Element Plus 全局变量覆盖 */
+:root {
+  --el-color-primary: #409EFF;
+  --el-border-color: #EBEEF5;
+  --el-background-color: #F5F7FA;
+  --el-text-color-primary: #303133;
+  --el-text-color-secondary: #909399;
+}
+
+/* 页面通用容器 */
+.page-container {
+  padding: 20px;
+}
+
+/* 筛选区域 */
+.filter-container {
+  margin-bottom: 16px;
+}
+
+.multi-line-filter-form .filter-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.multi-line-filter-form .filter-line:last-child {
+  margin-bottom: 0;
+  justify-content: flex-start;
+}
+
+.multi-line-filter-form .el-form-item {
+  margin-bottom: 0;
+  margin-right: 20px;
+}
+
+.filter-buttons {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.filter-buttons .el-button + .el-button {
+  margin-left: 12px;
+}
+
+/* 表格区域 */
+.table-container {
+  margin-bottom: 16px;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 分页样式 */
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 对话框样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 文本溢出省略 */
+.ellipsis-text {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 常用间距工具类 */
+.mt-4 {
+  margin-top: 4px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.ml-8 {
+  margin-left: 8px;
+}
+
+.mr-8 {
+  margin-right: 8px;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .filter-line {
+    flex-wrap: wrap;
+  }
+  
+  .filter-line > * {
+    margin-bottom: 12px;
+    width: 100% !important;
+  }
+  
+  .filter-buttons {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .el-form-item {
+    margin-right: 0;
+  }
+}
+
+/* 操作按钮样式优化 */
+.el-button [class*="el-icon"] + span {
+  margin-left: 4px; /* 调整图标和文字的间距 */
+}
+
+/* 表格单元格样式优化 */
+.el-table .cell {
+  padding: 0 12px;
+}
+
+/* 卡片容器样式 */
+.card-container {
+  margin-bottom: 16px;
+}
+
+/* 搜索区域样式 */
+.search-container {
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+}
+
+.search-label {
+  margin-right: 8px;
+  font-weight: normal;
+  color: #606266;
+}
+
+.search-buttons {
+  margin-left: auto;
+}
+
+.filter-dropdown {
+  width: 168px;
+}
+
+/* 表格工具栏样式 */
+.table-toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-toolbar .left {
+  display: flex;
+  gap: 12px;
+}
+
+.table-toolbar .right {
+  display: flex;
+  gap: 12px;
+}
+
+/* 调整表格样式 */
+.el-table {
+  --el-table-row-height: 54px;
+  --el-table-header-bg-color: #f5f7fa;
+}
+
+// 添加折叠菜单的样式
+.el-menu--vertical.el-menu--collapse {
+  .el-sub-menu__title {
+    span {
+      height: 0;
+      width: 0;
+      overflow: hidden;
+      visibility: hidden;
+      display: inline-block;
+    }
+  }
+}
+
+// 确保折叠时的tooltip显示正确
+.el-menu--popup {
+  min-width: 180px;
+  padding: 8px 0;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+// 菜单弹出层样式
+.el-popper.is-light {
+  border: 1px solid #e4e7ed;
+
+  .el-popper__arrow::before {
+    background: #ffffff;
+    border: 1px solid #e4e7ed;
+  }
+}
+
+// 菜单折叠过渡效果
+.el-menu-item-group__title {
+  padding: 0;
+}
+
+// 隐藏折叠状态下的子菜单箭头 - 增强版
+.el-menu--collapse {
+  .el-sub-menu {
+    &>.el-sub-menu__title {
+      .el-sub-menu__icon-arrow {
+        display: none !important;
+      }
+      
+      &>span {
+        display: none;
+      }
+    }
+  }
+}
+
+// 修复折叠状态下的logo容器
+.layout-aside .logo-container {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: all 0.3s;
+  
+  .logo-text, .logo-mini {
+    display: inline-block;
+    transition: all 0.3s;
+  }
+} 
