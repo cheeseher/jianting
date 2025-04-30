@@ -72,8 +72,9 @@
         </div>
       </div>
       
-      <!-- 表格 -->
+      <!-- 数据表格 -->
       <el-table
+        v-if="tableData.length > 0 || !tableLoading"
         ref="tableRef"
         v-loading="tableLoading"
         :data="tableData"
@@ -108,25 +109,6 @@
           </template>
         </el-table-column>
       </el-table>
-      
-      <!-- 调试信息 -->
-      <div class="debug-info" v-if="tableData.length === 0 && !tableLoading">
-        <el-alert
-          title="表格数据为空"
-          type="warning"
-          description="未能加载客户列表数据，请检查API调用是否正常"
-          show-icon
-          :closable="false"
-        />
-      </div>
-      
-      <div class="debug-info" v-if="tableLoading">
-        <p>正在加载数据...</p>
-      </div>
-      
-      <div class="debug-info" v-if="tableData.length > 0">
-        <p>已加载 {{ tableData.length }} 条记录</p>
-      </div>
       
       <!-- 分页 -->
       <div class="pagination-container">
@@ -221,10 +203,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import type { Customer } from '@/types/customer'
-import { getCustomerList, addCustomer, updateCustomer, deleteCustomer } from '@/api/customer'
+import { customerList } from '@/constants/mockData'
+import { addCustomer, updateCustomer, deleteCustomer } from '@/constants/mockApi'
+import { useRoute } from 'vue-router'
+import { appState } from '@/constants/appState'
 
 // 搜索表单
 const searchForm = reactive({
@@ -323,39 +308,45 @@ const addressPagination = reactive({
   total: 0
 })
 
+// 路由相关
+const route = useRoute()
+
 // 获取表格数据
-const fetchTableData = async () => {
+const fetchTableData = () => {
   tableLoading.value = true
-  tableData.value = [] // 清空现有数据
   
   try {
-    let params = {
-      pageNum: pagination.pageNum,
-      pageSize: pagination.pageSize,
-      keyword: searchForm.keyword,
-      status: searchForm.status,
-      timeRange: searchForm.timeRange.length ? searchForm.timeRange : undefined
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.customerData]
+    
+    // 应用过滤
+    if (searchForm.keyword) {
+      const keyword = searchForm.keyword.toLowerCase()
+      filteredData = filteredData.filter(item => 
+        item.id.toLowerCase().includes(keyword) || 
+        item.name.toLowerCase().includes(keyword))
     }
     
-    console.log('请求参数:', params) // 添加日志
-    
-    const response = await getCustomerList(params)
-    console.log('API返回数据:', response) // 添加日志
-    
-    if (response && response.list && Array.isArray(response.list)) {
-      tableData.value = response.list
-      pagination.total = response.total
-    } else {
-      console.error('返回数据格式不正确:', response)
-      ElMessage.error('数据格式错误')
+    if (searchForm.status !== '') {
+      const status = searchForm.status === 'true'
+      filteredData = filteredData.filter(item => item.status === status)
     }
+    
+    tableData.value = filteredData
+    pagination.total = filteredData.length
   } catch (error) {
-    console.error('获取客户列表失败', error)
-    ElMessage.error('获取客户列表失败')
+    console.error('获取数据失败', error)
+    tableData.value = []
+    pagination.total = 0
   } finally {
     tableLoading.value = false
   }
 }
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  fetchTableData()
+}, { immediate: true })
 
 // 搜索
 const handleSearch = () => {
@@ -736,8 +727,6 @@ onMounted(() => {
   try {
     fetchTableData()
   } catch (error) {
-    console.error('初始化数据失败', error)
-    ElMessage.error('初始化数据失败，请刷新页面重试')
     tableLoading.value = false
   }
 })
@@ -772,9 +761,6 @@ onMounted(() => {
 }
 
 .debug-info {
-  margin: 16px 0;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  display: none; /* 隐藏所有调试信息 */
 }
 </style> 

@@ -38,6 +38,7 @@
 
       <!-- 数据表格 -->
       <el-table
+        v-if="userList.length > 0 || !loading"
         v-loading="loading"
         :data="userList"
         border
@@ -129,9 +130,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, View, Edit, Delete, Key } from '@element-plus/icons-vue'
+import { appState } from '@/constants/appState'
+import { useRoute } from 'vue-router'
 
 // 定义表单对话框标题
 const dialogTitle = computed(() => form.id ? '编辑用户' : '添加用户')
@@ -150,37 +153,51 @@ const loading = ref(false)
 // 提交按钮加载状态
 const submitLoading = ref(false)
 // 用户列表
-const userList = ref([
-  {
-    id: '1',
-    username: 'admin',
-    realname: '管理员',
-    role: '超级管理员',
-    email: 'admin@example.com',
-    status: '启用',
-    createTime: '2024-09-27 15:00:00'
-  },
-  {
-    id: '2',
-    username: 'user1',
-    realname: '用户1',
-    role: '普通用户',
-    email: 'user1@example.com',
-    status: '启用',
-    createTime: '2024-09-27 15:00:00'
-  },
-  {
-    id: '3',
-    username: 'user2',
-    realname: '用户2',
-    role: '普通用户',
-    email: 'user2@example.com',
-    status: '禁用',
-    createTime: '2024-09-27 15:00:00'
-  }
-])
+const userList = ref<any[]>([])
 // 总条数
-const total = ref(3)
+const total = ref(0)
+
+// 路由相关
+const route = useRoute()
+
+// 获取用户列表
+const getList = () => {
+  loading.value = true
+  try {
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.userData]
+    
+    // 应用过滤
+    if (queryParams.username) {
+      filteredData = filteredData.filter(item => 
+        item.username.includes(queryParams.username))
+    }
+    
+    if (queryParams.realname) {
+      filteredData = filteredData.filter(item => 
+        item.realname.includes(queryParams.realname))
+    }
+    
+    if (queryParams.role) {
+      filteredData = filteredData.filter(item => 
+        item.role === queryParams.role)
+    }
+    
+    userList.value = filteredData
+    total.value = filteredData.length
+  } catch (error) {
+    console.error('获取用户列表失败', error)
+    userList.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  getList()
+}, { immediate: true })
 
 // 查询表单引用
 const queryFormRef = ref()
@@ -218,19 +235,19 @@ const rules = {
 // 查询按钮点击事件
 const handleQuery = () => {
   queryParams.pageNum = 1
-  ElMessage.success('查询功能开发中...')
+  getList()
 }
 
 // 重置按钮点击事件
 const handleReset = () => {
   queryFormRef.value?.resetFields()
   queryParams.pageNum = 1
-  ElMessage.success('重置成功')
+  getList()
 }
 
 // 刷新表格
 const refreshTable = () => {
-  ElMessage.success('刷新表格数据')
+  getList()
 }
 
 // 添加按钮点击事件

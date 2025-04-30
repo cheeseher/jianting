@@ -88,6 +88,7 @@
       
       <!-- 数据表格 -->
       <el-table
+        v-if="tableData.length > 0 || !tableLoading"
         ref="tableRef"
         v-loading="tableLoading"
         :data="tableData"
@@ -221,11 +222,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import type { MonitorAddress } from '@/types/monitor'
-import { getAddressList, addAddress, deleteAddress, batchDeleteAddress, chainOptions } from '@/api/monitor'
+import { chainOptions } from '@/constants/options'
+import { deleteAddress, batchDeleteAddress, addAddress } from '@/constants/mockApi'
 import { ArrowDown, ZoomIn } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
+import { appState } from '@/constants/appState'
 
 // 搜索表单
 const searchForm = reactive({
@@ -317,28 +321,45 @@ const rules = {
   ]
 }
 
+// 路由相关
+const route = useRoute()
+
 // 获取地址列表
-const fetchAddressList = async () => {
+const fetchAddressList = () => {
   tableLoading.value = true
+  
   try {
-    const params = {
-      chain: searchForm.chain,
-      address: searchForm.address,
-      customerId: searchForm.customerId,
-      pageNum: pagination.pageNum,
-      pageSize: pagination.pageSize
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.addressData]
+    
+    // 应用过滤器
+    if (searchForm.chain) {
+      filteredData = filteredData.filter(item => item.chain === searchForm.chain)
     }
     
-    const { list, total } = await getAddressList(params)
-    tableData.value = list
-    pagination.total = total
+    if (searchForm.address) {
+      filteredData = filteredData.filter(item => item.address.includes(searchForm.address as string))
+    }
+    
+    if (searchForm.customerId) {
+      filteredData = filteredData.filter(item => item.customer === searchForm.customerId)
+    }
+    
+    tableData.value = filteredData
+    pagination.total = filteredData.length
   } catch (error) {
-    console.error('获取地址列表失败', error)
-    ElMessage.error('获取地址列表失败')
+    console.error('获取数据失败', error)
+    tableData.value = []
+    pagination.total = 0
   } finally {
     tableLoading.value = false
   }
 }
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  fetchAddressList()
+}, { immediate: true })
 
 // 搜索
 const handleSearch = () => {

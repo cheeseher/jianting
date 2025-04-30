@@ -37,6 +37,7 @@
 
       <!-- 数据表格 -->
       <el-table
+        v-if="tokenList.length > 0 || !loading"
         v-loading="loading"
         :data="tokenList"
         border
@@ -124,11 +125,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { Search, Refresh, Plus, View, Edit, Delete } from '@element-plus/icons-vue'
 import { TokenInfo, TokenQueryParams } from '@/types/blockchain'
-import { getTokenList, saveToken, deleteToken } from '@/api/blockchain'
+import { tokenList as mockTokenList } from '@/constants/mockData'
+import { saveToken, deleteToken } from '@/constants/mockApi'
+import { useRoute } from 'vue-router'
+import { chainOptions } from '@/constants/options'
+import { appState } from '@/constants/appState'
 
 // 查询参数
 const queryParams = reactive<TokenQueryParams>({
@@ -139,9 +144,6 @@ const queryParams = reactive<TokenQueryParams>({
   pageNum: 1,
   pageSize: 10
 })
-
-// 公链选项
-const chainOptions = ref<string[]>(['BTC', 'ETH', 'BSC', 'TRON'])
 
 // 数据加载状态
 const loading = ref(false)
@@ -185,24 +187,57 @@ const rules = {
   ]
 }
 
-// 查看按钮点击事件
-const handleView = (row: TokenInfo) => {
-  ElMessage.success(`查看代币: ${row.symbol}`)
-}
+// 路由相关
+const route = useRoute()
 
 // 获取代币列表
-const getList = async () => {
+const getList = () => {
   loading.value = true
   try {
-    const res = await getTokenList(queryParams)
-    tokenList.value = res.list
-    total.value = res.total
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.tokenData]
+    
+    // 应用过滤
+    if (queryParams.name) {
+      filteredData = filteredData.filter(item => 
+        item.name.includes(queryParams.name as string))
+    }
+    
+    if (queryParams.symbol) {
+      filteredData = filteredData.filter(item => 
+        item.symbol.includes(queryParams.symbol as string))
+    }
+    
+    if (queryParams.contract) {
+      filteredData = filteredData.filter(item => 
+        item.contract.includes(queryParams.contract as string))
+    }
+    
+    if (queryParams.blockchain) {
+      filteredData = filteredData.filter(item => 
+        item.blockchain === queryParams.blockchain)
+    }
+    
+    tokenList.value = filteredData
+    total.value = filteredData.length
   } catch (error) {
     console.error('获取代币列表失败', error)
     ElMessage.error('获取代币列表失败')
+    tokenList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
+}
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  getList()
+}, { immediate: true })
+
+// 查看按钮点击事件
+const handleView = (row: TokenInfo) => {
+  ElMessage.success(`查看代币: ${row.symbol}`)
 }
 
 // 查询按钮点击事件

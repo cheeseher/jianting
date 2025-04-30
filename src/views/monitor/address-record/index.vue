@@ -82,6 +82,7 @@
       
       <!-- 数据表格 -->
       <el-table
+        v-if="tableData.length > 0 || !tableLoading"
         ref="tableRef"
         v-loading="tableLoading"
         :data="tableData"
@@ -118,10 +119,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { AddressChangeRecord } from '@/types/monitor'
-import { getAddressChangeRecords, chainOptions, operateTypeOptions } from '@/api/monitor'
+import { chainOptions, operateTypeOptions } from '@/constants/options'
+import { useRoute } from 'vue-router'
+import { appState } from '@/constants/appState'
 
 // 搜索表单
 const searchForm = reactive({
@@ -165,30 +168,49 @@ const pagination = reactive({
   total: 0
 })
 
+// 路由相关
+const route = useRoute()
+
 // 获取地址变动记录列表
-const fetchAddressChangeRecords = async () => {
+const fetchAddressChangeRecords = () => {
   tableLoading.value = true
+  
   try {
-    const params = {
-      address: searchForm.address,
-      chain: searchForm.chain,
-      customerId: searchForm.customerId,
-      type: searchForm.type,
-      timeRange: searchForm.timeRange,
-      pageNum: pagination.pageNum,
-      pageSize: pagination.pageSize
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.addressRecordData]
+    
+    // 应用过滤
+    if (searchForm.address) {
+      filteredData = filteredData.filter(item => 
+        item.address.includes(searchForm.address))
     }
     
-    const { list, total } = await getAddressChangeRecords(params)
-    tableData.value = list
-    pagination.total = total
+    if (searchForm.chain) {
+      filteredData = filteredData.filter(item => 
+        item.chain === searchForm.chain)
+    }
+    
+    if (searchForm.type) {
+      filteredData = filteredData.filter(item => 
+        item.type === searchForm.type)
+    }
+    
+    tableData.value = filteredData
+    pagination.total = filteredData.length
   } catch (error) {
     console.error('获取地址变动记录失败', error)
     ElMessage.error('获取地址变动记录失败')
+    tableData.value = []
+    pagination.total = 0
   } finally {
     tableLoading.value = false
   }
 }
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  fetchAddressChangeRecords()
+}, { immediate: true })
 
 // 搜索
 const handleSearch = () => {

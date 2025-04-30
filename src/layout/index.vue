@@ -69,10 +69,8 @@
       <!-- 内容区 -->
       <el-main class="layout-main">
         <router-view v-slot="{ Component }">
-          <transition name="fade-transform" mode="out-in">
-            <keep-alive>
-              <component :is="Component" />
-            </keep-alive>
+          <transition name="fade-transform" mode="out-in" :duration="{ enter: 200, leave: 100 }">
+            <component :is="Component" :key="route.path" />
           </transition>
         </router-view>
       </el-main>
@@ -106,7 +104,6 @@ const routes = computed(() => {
 const activeMenu = computed(() => {
   // 完整的当前路径，例如：/customer/list
   const fullPath = route.path
-  console.log('当前路由路径:', fullPath)
   return fullPath
 })
 
@@ -118,8 +115,6 @@ const breadcrumbs = computed(() => {
 
 // 自定义导航函数
 const handleMenuSelect = (index: string) => {
-  console.log('选择菜单项:', index)
-  
   // 外部链接
   if (/^(https?:|mailto:|tel:)/.test(index)) {
     window.open(index, '_blank')
@@ -130,7 +125,7 @@ const handleMenuSelect = (index: string) => {
   try {
     router.push(index)
   } catch (error) {
-    console.error('路由导航错误:', error)
+    // 错误处理
   }
 }
 
@@ -138,7 +133,7 @@ const handleMenuSelect = (index: string) => {
 watch(
   () => route.path,
   (newPath) => {
-    console.log('路由变化 -> 路径:', newPath, '激活菜单:', activeMenu.value)
+    // 监听路由变化
   },
   { immediate: true }
 )

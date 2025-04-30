@@ -15,6 +15,7 @@
 
       <!-- 数据表格 -->
       <el-table
+        v-if="roleList.length > 0 || !loading"
         v-loading="loading"
         :data="roleList"
         style="width: 100%"
@@ -56,8 +57,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { appState } from '@/constants/appState'
+import { useRoute } from 'vue-router'
 
 // 查询参数
 const queryParams = reactive({
@@ -69,49 +72,56 @@ const queryParams = reactive({
 // 数据加载状态
 const loading = ref(false)
 // 角色列表
-const roleList = ref([
-  {
-    id: '1',
-    roleName: '超级管理员',
-    roleKey: 'admin',
-    description: '拥有所有权限',
-    status: '启用',
-    createTime: '2024-09-27 15:00:00'
-  },
-  {
-    id: '2',
-    roleName: '普通用户',
-    roleKey: 'user',
-    description: '拥有基本权限',
-    status: '启用',
-    createTime: '2024-09-27 15:00:00'
-  },
-  {
-    id: '3',
-    roleName: '访客',
-    roleKey: 'visitor',
-    description: '只有查看权限',
-    status: '禁用',
-    createTime: '2024-09-27 15:00:00'
-  }
-])
+const roleList = ref<any[]>([])
 // 总条数
-const total = ref(3)
+const total = ref(0)
 
 // 查询表单引用
 const queryFormRef = ref()
 
+// 路由相关
+const route = useRoute()
+
+// 获取角色列表
+const getList = () => {
+  loading.value = true
+  try {
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.roleData]
+    
+    // 应用过滤
+    if (queryParams.roleName) {
+      filteredData = filteredData.filter(item => 
+        item.roleName.includes(queryParams.roleName))
+    }
+    
+    roleList.value = filteredData
+    total.value = filteredData.length
+  } catch (error) {
+    console.error('获取角色列表失败', error)
+    roleList.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  getList()
+}, { immediate: true })
+
 // 查询按钮点击事件
 const handleQuery = () => {
   queryParams.pageNum = 1
-  ElMessage.success('查询功能开发中...')
+  getList()
 }
 
 // 重置按钮点击事件
 const handleReset = () => {
   queryFormRef.value?.resetFields()
   queryParams.pageNum = 1
-  ElMessage.success('重置成功')
+  getList()
 }
 
 // 添加按钮点击事件

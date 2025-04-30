@@ -78,6 +78,7 @@
 
       <!-- 数据表格 -->
       <el-table
+        v-if="recordList.length > 0 || !loading"
         v-loading="loading"
         :data="recordList"
         style="width: 100%"
@@ -125,8 +126,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { CallbackRecord, CallbackRecordQueryParams } from '@/types/monitor'
-import { getCallbackRecords, chainOptions, transactionTypeOptions, callbackStatusOptions } from '@/api/monitor'
+import type { CallbackRecord, CallbackRecordQueryParams } from '@/types/monitor'
+import { chainOptions, transactionTypeOptions, callbackStatusOptions } from '@/constants/options'
+import { useRoute } from 'vue-router'
+import { appState } from '@/constants/appState'
 
 // 查询参数
 const queryParams = reactive<CallbackRecordQueryParams>({
@@ -162,13 +165,52 @@ const total = ref(0)
 // 查询表单引用
 const queryFormRef = ref()
 
+// 路由相关
+const route = useRoute()
+
 // 获取回调记录列表
-const getList = async () => {
+const getList = () => {
   loading.value = true
+  recordList.value = [] // 确保在开始加载前清空数据
+  total.value = 0 // 重置总数
+  
   try {
-    const res = await getCallbackRecords(queryParams)
-    recordList.value = res.list
-    total.value = res.total
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.callbackData]
+    
+    // 应用过滤
+    if (queryParams.id) {
+      filteredData = filteredData.filter(item => item.id.includes(queryParams.id as string))
+    }
+    
+    if (queryParams.hash) {
+      filteredData = filteredData.filter(item => item.hash.includes(queryParams.hash as string))
+    }
+    
+    if (queryParams.type) {
+      filteredData = filteredData.filter(item => item.type === queryParams.type)
+    }
+    
+    if (queryParams.chain) {
+      filteredData = filteredData.filter(item => item.chain === queryParams.chain)
+    }
+    
+    if (queryParams.tokenName) {
+      filteredData = filteredData.filter(item => 
+        item.tokenName && item.tokenName.includes(queryParams.tokenName as string))
+    }
+    
+    if (queryParams.customer) {
+      filteredData = filteredData.filter(item => 
+        item.customer && item.customer.includes(queryParams.customer as string))
+    }
+    
+    if (queryParams.status) {
+      filteredData = filteredData.filter(item => item.status === queryParams.status)
+    }
+    
+    recordList.value = filteredData
+    total.value = filteredData.length
   } catch (error) {
     console.error('获取回调记录列表失败', error)
     ElMessage.error('获取回调记录列表失败')
@@ -176,6 +218,11 @@ const getList = async () => {
     loading.value = false
   }
 }
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  getList()
+}, { immediate: true })
 
 // 查询按钮点击事件
 const handleQuery = () => {

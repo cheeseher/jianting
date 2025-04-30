@@ -18,6 +18,7 @@
 
       <!-- 数据表格 -->
       <el-table
+        v-if="chainList.length > 0 || !loading"
         v-loading="loading"
         :data="chainList"
         style="width: 100%"
@@ -89,10 +90,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { BlockchainInfo, BlockchainQueryParams } from '@/types/blockchain'
-import { getBlockchainList, saveBlockchain, deleteBlockchain } from '@/api/blockchain'
+import { useRoute } from 'vue-router'
+import { saveBlockchain, deleteBlockchain } from '@/constants/mockApi'
+import { appState } from '@/constants/appState'
 
 // 查询参数
 const queryParams = reactive<BlockchainQueryParams>({
@@ -142,20 +145,42 @@ const rules = {
   ]
 }
 
+// 路由相关
+const route = useRoute()
+
 // 获取公链列表
-const getList = async () => {
+const getList = () => {
   loading.value = true
   try {
-    const res = await getBlockchainList(queryParams)
-    chainList.value = res.list
-    total.value = res.total
+    // 直接使用全局状态数据，无需异步操作
+    let filteredData = [...appState.blockchainData]
+    
+    // 应用过滤
+    if (queryParams.name) {
+      filteredData = filteredData.filter(item => item.name.includes(queryParams.name as string))
+    }
+    
+    if (queryParams.mainCurrency) {
+      filteredData = filteredData.filter(item => 
+        item.mainCurrency.includes(queryParams.mainCurrency as string))
+    }
+    
+    chainList.value = filteredData
+    total.value = filteredData.length
   } catch (error) {
     console.error('获取公链列表失败', error)
     ElMessage.error('获取公链列表失败')
+    chainList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
+
+// 监听路由变化，确保每次进入页面时数据都会重新加载
+watch(() => route.fullPath, () => {
+  getList()
+}, { immediate: true })
 
 // 查询按钮点击事件
 const handleQuery = () => {
