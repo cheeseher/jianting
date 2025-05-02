@@ -57,8 +57,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item>修改密码</el-dropdown-item>
+                <el-dropdown-item @click="openPasswordDrawer">修改密码</el-dropdown-item>
                 <el-dropdown-item divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -76,6 +75,52 @@
       </el-main>
     </el-container>
   </el-container>
+  
+  <!-- 修改密码抽屉 -->
+  <el-drawer
+    v-model="passwordDrawerVisible"
+    title="修改密码"
+    direction="rtl"
+    size="400px"
+    :destroy-on-close="true"
+  >
+    <el-form
+      ref="passwordFormRef"
+      :model="passwordForm"
+      :rules="passwordRules"
+      label-width="100px"
+      label-position="right"
+    >
+      <el-form-item label="原密码" prop="oldPassword" required>
+        <el-input
+          v-model="passwordForm.oldPassword"
+          type="password"
+          placeholder="请输入原密码"
+          show-password
+        />
+      </el-form-item>
+      <el-form-item label="新密码" prop="newPassword" required>
+        <el-input
+          v-model="passwordForm.newPassword"
+          type="password"
+          placeholder="请输入新密码"
+          show-password
+        />
+      </el-form-item>
+      <el-form-item label="确认密码" prop="confirmPassword" required>
+        <el-input
+          v-model="passwordForm.confirmPassword"
+          type="password"
+          placeholder="请再次输入新密码"
+          show-password
+        />
+      </el-form-item>
+      <div class="drawer-footer">
+        <el-button @click="passwordDrawerVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitPasswordForm" :loading="passwordSubmitLoading">确认</el-button>
+      </div>
+    </el-form>
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
@@ -84,6 +129,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { RouteRecordRaw } from 'vue-router'
 import SidebarItem from './components/SidebarItem.vue'
 import { Fold, Expand } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 路由信息
 const route = useRoute()
@@ -137,6 +183,69 @@ watch(
   },
   { immediate: true }
 )
+
+// 修改密码抽屉相关
+const passwordDrawerVisible = ref(false)
+const passwordSubmitLoading = ref(false)
+const passwordFormRef = ref()
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+// 密码表单验证规则
+const passwordRules = {
+  oldPassword: [
+    { required: true, message: '请输入原密码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        if (value !== passwordForm.value.newPassword) {
+          callback(new Error('两次输入密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+// 打开修改密码抽屉
+const openPasswordDrawer = () => {
+  passwordDrawerVisible.value = true
+}
+
+// 提交修改密码表单
+const submitPasswordForm = () => {
+  if (!passwordFormRef.value) return
+  
+  passwordFormRef.value.validate((valid: boolean) => {
+    if (!valid) return
+    
+    passwordSubmitLoading.value = true
+    
+    // 模拟API调用
+    setTimeout(() => {
+      ElMessage.success('密码修改成功')
+      passwordDrawerVisible.value = false
+      passwordSubmitLoading.value = false
+      // 重置表单
+      passwordForm.value = {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    }, 1000)
+  })
+}
 </script>
 
 <style scoped>
@@ -247,6 +356,11 @@ watch(
 
 .el-menu--collapse {
   width: 64px;
+}
+
+.drawer-footer {
+  margin-top: 20px;
+  text-align: right;
 }
 
 /* 过渡动画 */

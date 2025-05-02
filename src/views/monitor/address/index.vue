@@ -187,11 +187,11 @@
               :rules="rules"
               label-width="120px"
             >
-              <el-form-item label="地址" prop="address" required>
-                <el-input v-model="form.address" placeholder="请输入地址" />
+              <el-form-item label="监听地址" prop="address" required>
+                <el-input v-model="form.address" placeholder="请输入监听地址" />
               </el-form-item>
               
-              <el-form-item label="公链" prop="chain" required>
+              <el-form-item label="选择公链" prop="chain" required>
                 <el-select v-model="form.chain" placeholder="请选择公链" class="filter-dropdown">
                   <el-option
                     v-for="item in chainOptions.filter(item => item.value)"
@@ -202,7 +202,7 @@
                 </el-select>
               </el-form-item>
               
-              <el-form-item label="客户" prop="customers">
+              <el-form-item label="选择客户" prop="customers">
                 <el-select
                   v-model="form.customers"
                   placeholder="请选择客户"
@@ -534,7 +534,7 @@ const form = reactive({
 // 表单校验规则
 const rules = {
   address: [
-    { required: true, message: '请输入地址', trigger: 'blur' },
+    { required: true, message: '请输入监听地址', trigger: 'blur' },
     { min: 10, message: '地址长度不能少于10个字符', trigger: 'blur' }
   ],
   chain: [

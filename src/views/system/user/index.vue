@@ -55,16 +55,18 @@
             <el-tag :type="row.status === '启用' ? 'success' : 'danger'">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="330" fixed="right">
           <template #default="{ row }">
-            <el-button link :icon="View" @click="handleView(row)">查看</el-button>
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="warning" :icon="Key" @click="handleResetPwd(row)">重置密码</el-button>
-            <el-popconfirm title="确认删除该用户吗？" @confirm="handleDelete(row)">
-              <template #reference>
-                <el-button link type="danger" :icon="Delete">删除</el-button>
-              </template>
-            </el-popconfirm>
+            <div class="operation-btns">
+              <el-button link :icon="View" @click="handleView(row)">查看</el-button>
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+              <el-button link type="warning" :icon="Key" @click="handleResetPwd(row)">重置密码</el-button>
+              <el-popconfirm title="确认删除该用户吗？" @confirm="handleDelete(row)">
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -392,6 +394,11 @@ onMounted(() => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+.operation-btns {
+  display: flex;
+  white-space: nowrap;
 }
 
 /* 响应式处理 */

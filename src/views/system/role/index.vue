@@ -31,11 +31,17 @@
             <el-tag :type="row.status === '启用' ? 'success' : 'danger'">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="success" link @click="handlePermission(row)">权限</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+            <div class="operation-btns">
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+              <el-button link type="success" :icon="SetUp" @click="handlePermission(row)">权限</el-button>
+              <el-popconfirm title="确认删除该角色吗？" @confirm="handleDelete(row)">
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -61,6 +67,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appState } from '@/constants/appState'
 import { useRoute } from 'vue-router'
+import { Edit, Delete, SetUp } from '@element-plus/icons-vue'
 
 // 查询参数
 const queryParams = reactive({
@@ -186,5 +193,10 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.operation-btns {
+  display: flex;
+  white-space: nowrap;
 }
 </style> 
