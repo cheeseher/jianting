@@ -1,77 +1,97 @@
 <template>
   <div class="page-container">
     <div class="callback-record-container">
-      <!-- 搜索表单 -->
-      <el-form :model="queryParams" ref="queryFormRef" :inline="true" class="search-form">
-        <el-form-item label="回调ID">
-          <el-input v-model="queryParams.id" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="Hash">
-          <el-input v-model="queryParams.hash" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="类型">
-          <el-select v-model="queryParams.type" placeholder="全部" clearable>
-            <el-option 
-              v-for="item in transactionTypeOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+      <!-- 搜索区域 -->
+      <el-card shadow="never" class="card-container">
+        <div class="search-container">
+          <div class="search-item">
+            <span class="search-label">回调ID：</span>
+            <el-input v-model="queryParams.id" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">Hash：</span>
+            <el-input v-model="queryParams.hash" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">类型：</span>
+            <el-select v-model="queryParams.type" placeholder="全部" clearable style="width: 168px">
+              <el-option 
+                v-for="item in transactionTypeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">公链：</span>
+            <el-select v-model="queryParams.chain" placeholder="全部" clearable style="width: 168px">
+              <el-option 
+                v-for="item in chainOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">代币名称：</span>
+            <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">监听地址：</span>
+            <el-input v-model="queryParams.monitorAddress" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">对象地址：</span>
+            <el-input v-model="queryParams.targetAddress" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">客户：</span>
+            <el-input v-model="queryParams.customer" placeholder="输入客户ID/名称" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">回调时间：</span>
+            <el-date-picker
+              v-model="dateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              :default-time="['00:00:00', '23:59:59']"
+              style="width: 380px"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="公链">
-          <el-select v-model="queryParams.chain" placeholder="全部" clearable>
-            <el-option 
-              v-for="item in chainOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="代币名称">
-          <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable />
-        </el-form-item>
-      </el-form>
-
-      <el-form :model="queryParams" ref="queryFormRef" :inline="true" class="search-form">
-        <el-form-item label="监听地址">
-          <el-input v-model="queryParams.monitorAddress" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="对象地址">
-          <el-input v-model="queryParams.targetAddress" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="客户">
-          <el-input v-model="queryParams.customer" placeholder="输入客户ID/名称" clearable />
-        </el-form-item>
-        <el-form-item label="回调时间">
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            :default-time="['00:00:00', '23:59:59']"
-          />
-        </el-form-item>
-        <el-form-item label="回调状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable>
-            <el-option 
-              v-for="item in callbackStatusOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-          <el-button @click="handleExport">导出</el-button>
-        </el-form-item>
-      </el-form>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">回调状态：</span>
+            <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 168px">
+              <el-option 
+                v-for="item in callbackStatusOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
+          
+          <div class="search-buttons">
+            <el-button type="primary" @click="handleQuery">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleExport">导出</el-button>
+          </div>
+        </div>
+      </el-card>
 
       <!-- 数据表格 -->
       <el-table
@@ -88,7 +108,11 @@
         <el-table-column prop="type" label="类型" min-width="80" />
         <el-table-column prop="chain" label="公链" min-width="80" />
         <el-table-column prop="tokenName" label="代币名称" min-width="100" />
-        <el-table-column prop="amount" label="转账数量" min-width="100" />
+        <el-table-column prop="amount" label="转账数量" min-width="100">
+          <template #default="{ row }">
+            <span :class="row.amount.startsWith('+') ? 'amount-positive' : 'amount-negative'">{{ row.amount }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="customer" label="客户" min-width="100" />
         <el-table-column prop="callbackTime" label="回调时间" min-width="160" />
         <el-table-column prop="status" label="回调状态" min-width="100">
@@ -98,7 +122,7 @@
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="120">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleDetail(row)">手动回调</el-button>
+            <el-button type="primary" link :icon="refreshRightIcon" @click="handleDetail(row)">手动回调</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -126,6 +150,7 @@ import type { CallbackRecord, CallbackRecordQueryParams } from '@/types/monitor'
 import { chainOptions, transactionTypeOptions, callbackStatusOptions } from '@/constants/options'
 import { useRoute } from 'vue-router'
 import { appState } from '@/constants/appState'
+import { RefreshRight } from '@element-plus/icons-vue'
 
 // 查询参数
 const queryParams = reactive<CallbackRecordQueryParams>({
@@ -162,6 +187,9 @@ const queryFormRef = ref()
 
 // 路由相关
 const route = useRoute()
+
+// 图标
+const refreshRightIcon = RefreshRight
 
 // 获取回调记录列表
 const getList = () => {
@@ -240,12 +268,12 @@ const handleExport = () => {
 
 // 手动回调点击事件
 const handleDetail = (row: CallbackRecord) => {
-  ElMessageBox.confirm(`确认要手动回调记录 ${row.id} 吗？`, '提示', {
-    confirmButtonText: '确定',
+  ElMessageBox.confirm(`是否将该条交易记录再次推送给客户Id (客户名称)?`, '系统提示', {
+    confirmButtonText: '再次推送',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    ElMessage.success('回调请求已发送')
+    ElMessage.success('操作成功!')
   }).catch(() => {
     // 取消操作
   })
@@ -274,15 +302,48 @@ onMounted(() => {
   padding: 20px;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.card-container {
+  margin-bottom: 16px;
+}
+
+.search-container {
   display: flex;
   flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+}
+
+.search-label {
+  white-space: nowrap;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.search-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .pagination-container {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.amount-positive {
+  color: #F56C6C;
+  font-weight: bold;
+}
+
+.amount-negative {
+  color: #67C23A;
+  font-weight: bold;
 }
 </style> 

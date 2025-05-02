@@ -1,20 +1,24 @@
 <template>
   <div class="page-container">
     <div class="chain-container">
-      <!-- 搜索表单 -->
-      <el-form :model="queryParams" ref="queryFormRef" :inline="true" class="search-form">
-        <el-form-item label="公链">
-          <el-select v-model="queryParams.name" placeholder="全部" clearable>
-            <el-option label="全部" value="" />
-            <el-option v-for="item in chainOptions" :key="item" :label="item" :value="item" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-          <el-button type="success" @click="handleAdd">添加公链</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- 搜索区域 -->
+      <el-card shadow="never" class="card-container">
+        <div class="search-container">
+          <div class="search-item">
+            <span class="search-label">公链：</span>
+            <el-select v-model="queryParams.name" placeholder="全部" clearable style="width: 168px">
+              <el-option label="全部" value="" />
+              <el-option v-for="item in chainOptions" :key="item" :label="item" :value="item" />
+            </el-select>
+          </div>
+          
+          <div class="search-buttons">
+            <el-button type="primary" @click="handleQuery">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button type="success" @click="handleAdd">添加公链</el-button>
+          </div>
+        </div>
+      </el-card>
 
       <!-- 数据表格 -->
       <el-table
@@ -33,8 +37,8 @@
         <el-table-column prop="addTime" label="添加时间" min-width="160" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -96,6 +100,7 @@ import { BlockchainInfo, BlockchainQueryParams } from '@/types/blockchain'
 import { useRoute } from 'vue-router'
 import { saveBlockchain, deleteBlockchain } from '@/constants/mockApi'
 import { appState } from '@/constants/appState'
+import { Edit, Delete } from '@element-plus/icons-vue'
 
 // 查询参数
 const queryParams = reactive<BlockchainQueryParams>({
@@ -281,12 +286,41 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.chain-container {
+.page-container {
   padding: 20px;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.chain-container {
+  width: 100%;
+}
+
+.card-container {
+  margin-bottom: 16px;
+}
+
+.search-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+}
+
+.search-label {
+  white-space: nowrap;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.search-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .pagination-container {
@@ -298,5 +332,11 @@ onMounted(() => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 确保表单元素宽度一致 */
+.el-form-item .el-input,
+.el-form-item .el-select {
+  width: 100%;
 }
 </style> 

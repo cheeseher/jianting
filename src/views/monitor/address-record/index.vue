@@ -1,8 +1,6 @@
 <template>
   <div class="page-container">
     <div class="address-record-container">
-      <h2>地址变动记录</h2>
-      
       <!-- 搜索区域 -->
       <el-card shadow="never" class="card-container">
         <div class="search-container">

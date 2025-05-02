@@ -57,7 +57,6 @@
         <el-table-column prop="addTime" label="添加时间" min-width="160" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link :icon="View" @click="handleView(row)">查看</el-button>
             <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
             <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>

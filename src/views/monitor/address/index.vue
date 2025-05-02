@@ -147,12 +147,12 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
             <el-popconfirm title="确认删除?" @confirm="handleDelete(row)">
               <template #reference>
-                <el-button link type="danger">删除</el-button>
+                <el-button link type="danger" :icon="Delete">删除</el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -379,7 +379,7 @@ import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import type { MonitorAddress } from '@/types/monitor'
 import { chainOptions } from '@/constants/options'
 import { deleteAddress, batchDeleteAddress, addAddress } from '@/constants/mockApi'
-import { ArrowDown, ZoomIn } from '@element-plus/icons-vue'
+import { ArrowDown, Edit, Delete } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
 

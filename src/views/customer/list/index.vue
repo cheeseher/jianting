@@ -104,8 +104,8 @@
         <el-table-column prop="updateTime" label="更新时间" min-width="160" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="confirmDelete(row)">删除</el-button>
+            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="danger" :icon="Delete" @click="confirmDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -181,7 +181,7 @@
           <el-table-column prop="addTime" label="添加时间" min-width="160" />
           <el-table-column label="操作" width="100" align="center">
             <template #default="{ row }">
-              <el-button link type="danger" @click="confirmDeleteAddress(row)">删除</el-button>
+              <el-button link type="danger" :icon="Delete" @click="confirmDeleteAddress(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -210,6 +210,7 @@ import { customerList } from '@/constants/mockData'
 import { addCustomer, updateCustomer, deleteCustomer } from '@/constants/mockApi'
 import { useRoute } from 'vue-router'
 import { appState } from '@/constants/appState'
+import { Edit, Delete } from '@element-plus/icons-vue'
 
 // 搜索表单
 const searchForm = reactive({

@@ -1,64 +1,75 @@
 <template>
   <div class="page-container">
     <div class="monitor-record-container">
-      <h2>监听记录</h2>
-      
-      <!-- 搜索区域 - 第一行 -->
-      <el-form :model="queryParams" ref="queryFormRef" :inline="true" class="search-form">
-        <el-form-item label="Hash:">
-          <el-input v-model="queryParams.hash" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="类型:">
-          <el-select v-model="queryParams.type" placeholder="全部" clearable>
-            <el-option 
-              v-for="item in transactionTypeOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+      <!-- 搜索区域 -->
+      <el-card shadow="never" class="card-container">
+        <div class="search-container">
+          <div class="search-item">
+            <span class="search-label">Hash：</span>
+            <el-input v-model="queryParams.hash" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">类型：</span>
+            <el-select v-model="queryParams.type" placeholder="全部" clearable style="width: 168px">
+              <el-option 
+                v-for="item in transactionTypeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">公链：</span>
+            <el-select v-model="queryParams.chain" placeholder="全部" clearable style="width: 168px">
+              <el-option 
+                v-for="item in chainOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">代币名称：</span>
+            <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">监听地址：</span>
+            <el-input v-model="queryParams.monitorAddress" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">对象地址：</span>
+            <el-input v-model="queryParams.targetAddress" placeholder="输入关键词" clearable style="width: 220px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">交易时间：</span>
+            <el-date-picker
+              v-model="dateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              :default-time="['00:00:00', '23:59:59']"
+              style="width: 380px"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="公链:">
-          <el-select v-model="queryParams.chain" placeholder="全部" clearable>
-            <el-option 
-              v-for="item in chainOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="代币名称:">
-          <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable />
-        </el-form-item>
-      </el-form>
-
-      <!-- 搜索区域 - 第二行 -->
-      <el-form :model="queryParams" ref="queryFormRef2" :inline="true" class="search-form">
-        <el-form-item label="监听地址:">
-          <el-input v-model="queryParams.monitorAddress" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="对象地址:">
-          <el-input v-model="queryParams.targetAddress" placeholder="输入关键词" clearable />
-        </el-form-item>
-        <el-form-item label="交易时间:">
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            :default-time="['00:00:00', '23:59:59']"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-          <el-button @click="handleExport">导出</el-button>
-        </el-form-item>
-      </el-form>
+          </div>
+          
+          <div class="search-buttons">
+            <el-button type="primary" @click="handleQuery">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleExport">导出</el-button>
+          </div>
+        </div>
+      </el-card>
 
       <!-- 数据表格 -->
       <el-table
@@ -105,14 +116,6 @@
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
-      </div>
-      
-      <!-- 右侧说明信息 -->
-      <div class="info-panel">
-        <div class="info-item">
-        </div>
-        <div class="info-notice">
-        </div>
       </div>
     </div>
   </div>
@@ -270,14 +273,35 @@ onMounted(() => {
 <style scoped>
 .monitor-record-container {
   padding: 20px;
-  position: relative;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.card-container {
+  margin-bottom: 16px;
+}
+
+.search-container {
   display: flex;
   flex-wrap: wrap;
+  gap: 16px;
   align-items: center;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+}
+
+.search-label {
+  white-space: nowrap;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.search-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .pagination-container {
@@ -302,33 +326,5 @@ onMounted(() => {
 .amount-negative {
   color: #F56C6C;
   font-weight: bold;
-}
-
-.info-panel {
-  position: absolute;
-  top: 70px;
-  right: 20px;
-  width: 300px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  padding: 15px;
-  font-size: 14px;
-  color: #606266;
-  z-index: 1;
-}
-
-.info-item {
-  margin-bottom: 15px;
-}
-
-.info-item div {
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.info-notice {
-  padding-top: 10px;
-  border-top: 1px dashed #ddd;
 }
 </style> 
