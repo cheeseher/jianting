@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { addressList, addressChangeRecords, callbackRecords, blockchainList, tokenList, customerList, userList, roleList } from './mockData'
+import { addressList, addressChangeRecords, callbackRecords, blockchainList, tokenList, customerList, userList, roleList, triggerRecords, actionRecords } from './mockData'
 
 // 创建全局响应式数据状态，确保数据在页面间共享且保持一致
 export const appState = reactive({
@@ -18,5 +18,9 @@ export const appState = reactive({
   // 用户数据
   userData: [...userList],
   // 角色数据
-  roleData: [...roleList]
+  roleData: [...roleList],
+  // 异常触发记录
+  triggerData: [...triggerRecords],
+  // 动作执行记录
+  actionData: [...actionRecords]
 }) 

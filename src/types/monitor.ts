@@ -92,4 +92,52 @@ export interface CallbackRecordQueryParams {
   status?: string;      // 回调状态
   pageNum: number;      // 页码
   pageSize: number;     // 每页条数
+}
+
+// 异常触发记录类型
+export interface TriggerRecord {
+  id: string;           // 记录ID
+  triggerTime: string;  // 触发时间
+  monitorAddress: string; // 监听地址
+  customer: string;     // 客户
+  hash: string;         // 交易哈希
+  amount: string;       // 交易金额
+  triggerDesc: string;  // 触发条件描述
+  triggerAction: string; // 触发动作（闪电转账/多签）
+  actionStatus: string; // 动作状态（未提交/提交成功/提交失败）
+  failReason?: string;  // 失败原因
+}
+
+// 异常触发记录查询参数
+export interface TriggerRecordQueryParams {
+  monitorAddress?: string; // 监听地址
+  customer?: string;      // 客户
+  triggerAction?: string; // 触发动作
+  actionStatus?: string;  // 动作状态
+  timeRange?: string[];   // 触发时间范围
+  pageNum: number;        // 页码
+  pageSize: number;       // 每页条数
+}
+
+// 动作执行记录类型
+export interface ActionRecord {
+  id: string;           // 记录ID
+  executeTime: string;  // 执行时间
+  monitorAddress: string; // 监听地址
+  customer: string;     // 客户
+  relatedTriggerId: string; // 关联异常记录ID
+  actionType: string;   // 动作类型（闪电转账/多签）
+  actionStatus: string; // 动作状态（提交成功/处理中/失败/完成）
+  failReason?: string;  // 失败原因
+}
+
+// 动作执行记录查询参数
+export interface ActionRecordQueryParams {
+  monitorAddress?: string; // 监听地址
+  customer?: string;      // 客户
+  actionType?: string;    // 动作类型
+  actionStatus?: string;  // 动作状态
+  timeRange?: string[];   // 执行时间范围
+  pageNum: number;        // 页码
+  pageSize: number;       // 每页条数
 } 

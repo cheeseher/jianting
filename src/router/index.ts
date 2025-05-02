@@ -57,6 +57,18 @@ const routes: Array<RouteRecordRaw> = [
             name: 'CallbackRecord',
             component: () => import('../views/monitor/callback-record/index.vue'),
             meta: { title: '回调记录' }
+          },
+          {
+            path: 'trigger-record',
+            name: 'TriggerRecord',
+            component: () => import('../views/monitor/trigger-record/index.vue'),
+            meta: { title: '异常触发记录' }
+          },
+          {
+            path: 'action-record',
+            name: 'ActionRecord',
+            component: () => import('../views/monitor/action-record/index.vue'),
+            meta: { title: '动作执行记录' }
           }
         ]
       },

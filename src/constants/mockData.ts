@@ -1,4 +1,4 @@
-import { MonitorAddress, AddressChangeRecord, CallbackRecord } from '@/types/monitor'
+import { MonitorAddress, AddressChangeRecord, CallbackRecord, TriggerRecord, ActionRecord } from '@/types/monitor'
 import { BlockchainInfo, TokenInfo } from '@/types/blockchain'
 import { Customer } from '@/types/customer'
 
@@ -338,5 +338,116 @@ export const roleList = [
     description: '只有查看权限',
     status: '禁用',
     createTime: '2024-09-27 15:00:00'
+  }
+]
+
+// 异常触发记录数据
+export const triggerRecords: TriggerRecord[] = [
+  {
+    id: '1001',
+    triggerTime: '2024-08-25 13:42:18',
+    monitorAddress: '0x8C3fa94D1F4dF3a91296C6D380E092A0a98198DA',
+    customer: '张三 (100001)',
+    hash: '0x7d2b8c6d19f25b83d34957c9f5428a0fe3fc7f2ab1e8338135d3c3ebe4600af7',
+    amount: '5000 USDT',
+    triggerDesc: '单笔金额≥1000USDT 且 达到历史最大金额的110%',
+    triggerAction: '闪电转账',
+    actionStatus: '提交成功'
+  },
+  {
+    id: '1002',
+    triggerTime: '2024-08-26 09:15:33',
+    monitorAddress: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
+    customer: '李四 (100002)',
+    hash: '0x9a3b7f5d2c8e1a4b6d5e8f9a2c1d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d',
+    amount: '3500 USDC',
+    triggerDesc: '单笔金额≥2000USDC 且 达到历史最大金额的135%',
+    triggerAction: '多签',
+    actionStatus: '提交失败',
+    failReason: '接口异常，请求超时'
+  },
+  {
+    id: '1003',
+    triggerTime: '2024-08-27 17:28:56',
+    monitorAddress: 'TNPeeaaFB7K33cCZzBHZZv1xUbhJbQJbEc',
+    customer: '王五 (100003)',
+    hash: '0xe1c2d3b4a5f6e7d8c9b0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2',
+    amount: '25000 USDT',
+    triggerDesc: '单笔金额≥20000USDT 且 达到历史最大金额的110%',
+    triggerAction: '闪电转账',
+    actionStatus: '提交成功'
+  },
+  {
+    id: '1004',
+    triggerTime: '2024-08-28 05:37:42',
+    monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    customer: '赵六 (100004)',
+    hash: 'bc1qasdfghjklzxcvbnm0987654321qwertyuiop',
+    amount: '0.75 BTC',
+    triggerDesc: '单笔金额≥0.5BTC 且 达到历史最大金额的125%',
+    triggerAction: '多签',
+    actionStatus: '未提交'
+  },
+  {
+    id: '1005',
+    triggerTime: '2024-08-29 21:56:17',
+    monitorAddress: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    customer: '张三 (100001)',
+    hash: '0xf1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0d1c2b3a4f5e6d7c8b9a0f1e2',
+    amount: '8500 USDT',
+    triggerDesc: '单笔金额≥5000USDT 且 达到历史最大金额的150%',
+    triggerAction: '闪电转账',
+    actionStatus: '提交成功'
+  }
+]
+
+// 动作执行记录数据
+export const actionRecords: ActionRecord[] = [
+  {
+    id: '2001',
+    executeTime: '2024-08-25 13:45:22',
+    monitorAddress: '0x8C3fa94D1F4dF3a91296C6D380E092A0a98198DA',
+    customer: '张三 (100001)',
+    relatedTriggerId: '1001',
+    actionType: '闪电转账',
+    actionStatus: '完成'
+  },
+  {
+    id: '2002',
+    executeTime: '2024-08-26 09:18:45',
+    monitorAddress: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
+    customer: '李四 (100002)',
+    relatedTriggerId: '1002',
+    actionType: '多签',
+    actionStatus: '失败',
+    failReason: '余额不足'
+  },
+  {
+    id: '2003',
+    executeTime: '2024-08-27 17:30:12',
+    monitorAddress: 'TNPeeaaFB7K33cCZzBHZZv1xUbhJbQJbEc',
+    customer: '王五 (100003)',
+    relatedTriggerId: '1003',
+    actionType: '闪电转账',
+    actionStatus: '处理中'
+  },
+  {
+    id: '2004',
+    executeTime: '2024-08-29 22:00:35',
+    monitorAddress: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    customer: '张三 (100001)',
+    relatedTriggerId: '1005',
+    actionType: '闪电转账',
+    actionStatus: '完成'
+  },
+  {
+    id: '2005',
+    executeTime: '2024-08-29 22:15:48',
+    monitorAddress: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    customer: '张三 (100001)',
+    relatedTriggerId: '1005',
+    actionType: '闪电转账',
+    actionStatus: '失败',
+    failReason: '网络连接异常'
   }
 ] 

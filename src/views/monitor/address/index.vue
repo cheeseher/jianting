@@ -105,7 +105,31 @@
           </template>
         </el-table-column>
         <el-table-column label="公链" prop="chain" width="100" />
+        <el-table-column label="客户" width="100">
+          <template #default="{ row }">
+            <span 
+              v-if="row.customers && row.customers.length > 0"
+              class="customer-number"
+              @click="showCustomerRelationDialog(row)"
+            >
+              {{ row.customers.length }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="主币余额" prop="mainBalance" width="100" />
+        <el-table-column label="代币余额" min-width="180">
+          <template #default="{ row }">
+            <div class="token-balance-cell">
+              <div>
+                {{ formatTokenBalance(row.tokenBalance, 2) }}
+                <span v-if="getTokenCount(row.tokenBalance) > 2" class="view-all" @click.stop="(e) => showTokenDetails(row, e)">
+                  全部
+                </span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="单笔触发金额" width="120">
           <template #default="{ row }">
             {{ row.triggerAmount || '-' }}
@@ -121,32 +145,8 @@
             {{ row.triggerAction ? formatTriggerAction(row.triggerAction) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="代币余额" min-width="180">
-          <template #default="{ row }">
-            <div class="token-balance-cell">
-              <div>
-                {{ formatTokenBalance(row.tokenBalance, 2) }}
-                <span v-if="getTokenCount(row.tokenBalance) > 2" class="view-all" @click.stop="(e) => showTokenDetails(row, e)">
-                  全部
-                </span>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
         <el-table-column label="添加时间" prop="addTime" width="180" />
         <el-table-column label="更新时间" prop="updateTime" width="180" />
-        <el-table-column label="客户" width="100">
-          <template #default="{ row }">
-            <span 
-              v-if="row.customers && row.customers.length > 0"
-              class="customer-number"
-              @click="showCustomerRelationDialog(row)"
-            >
-              {{ row.customers.length }}
-            </span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>

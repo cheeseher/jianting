@@ -15,23 +15,6 @@
           </div>
           
           <div class="search-item">
-            <span class="search-label">公链：</span>
-            <el-select 
-              v-model="searchForm.chain" 
-              placeholder="全部" 
-              clearable 
-              class="filter-dropdown"
-            >
-              <el-option
-                v-for="item in chainOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </div>
-          
-          <div class="search-item">
             <span class="search-label">客户：</span>
             <el-input 
               v-model="searchForm.customerId" 
@@ -88,7 +71,6 @@
         stripe
       >
         <el-table-column label="监听地址" prop="address" min-width="180" />
-        <el-table-column label="公链" prop="chain" width="100" />
         <el-table-column label="类型" prop="type" width="100" />
         <el-table-column label="操作人" prop="operator" width="150" />
         <el-table-column label="操作时间" prop="operateTime" width="180" />
@@ -121,7 +103,6 @@ import { appState } from '@/constants/appState'
 // 搜索表单
 const searchForm = reactive({
   address: '',
-  chain: '',
   customerId: '',
   type: '',
   timeRange: [] as string[]
@@ -177,11 +158,6 @@ const fetchAddressChangeRecords = () => {
         item.address.includes(searchForm.address))
     }
     
-    if (searchForm.chain) {
-      filteredData = filteredData.filter(item => 
-        item.chain === searchForm.chain)
-    }
-    
     if (searchForm.type) {
       filteredData = filteredData.filter(item => 
         item.type === searchForm.type)
@@ -213,7 +189,6 @@ const handleSearch = () => {
 // 重置搜索
 const handleReset = () => {
   searchForm.address = ''
-  searchForm.chain = ''
   searchForm.customerId = ''
   searchForm.type = ''
   searchForm.timeRange = []
