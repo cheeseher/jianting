@@ -210,8 +210,8 @@ const handleEdit = (row: BlockchainInfo) => {
 
 // 删除按钮点击事件
 const handleDelete = (row: BlockchainInfo) => {
-  ElMessageBox.confirm(`确认要删除公链 ${row.name} 吗？`, '提示', {
-    confirmButtonText: '确定',
+  ElMessageBox.confirm(`删除后, 与该公链关联的监听地址将无法获取到交易信息，确定要删除吗?`, '系统提示', {
+    confirmButtonText: '删除',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {

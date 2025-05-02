@@ -7,7 +7,7 @@
           <el-form-item label="公链：" prop="blockchain">
             <el-select v-model="queryParams.blockchain" placeholder="请选择公链" clearable style="width: 168px">
               <el-option label="全部" value="" />
-              <el-option v-for="item in chainOptions" :key="item" :label="item" :value="item" />
+              <el-option v-for="item in chainSelectOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="代币名称：" prop="name">
@@ -59,11 +59,7 @@
           <template #default="{ row }">
             <el-button link :icon="View" @click="handleView(row)">查看</el-button>
             <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-popconfirm title="确认删除该代币吗？" @confirm="handleDelete(row)">
-              <template #reference>
-                <el-button link type="danger" :icon="Delete">删除</el-button>
-              </template>
-            </el-popconfirm>
+            <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -96,22 +92,19 @@
         label-width="100px"
         label-position="right"
       >
-        <el-form-item label="代币名称" prop="name" required>
-          <el-input v-model="form.name" placeholder="请输入代币名称" />
-        </el-form-item>
-        <el-form-item label="代币符号" prop="symbol" required>
-          <el-input v-model="form.symbol" placeholder="请输入代币符号" />
-        </el-form-item>
-        <el-form-item label="所属公链" prop="blockchain" required>
-          <el-select v-model="form.blockchain" placeholder="请选择公链" style="width: 100%">
-            <el-option v-for="item in chainOptions" :key="item" :label="item" :value="item" />
+        <el-form-item label="选择公链：" prop="blockchain" required>
+          <el-select v-model="form.blockchain" placeholder="选择公链" style="width: 100%">
+            <el-option v-for="item in chainSelectOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="合约地址" prop="contract" required>
-          <el-input v-model="form.contract" placeholder="请输入合约地址" />
+        <el-form-item label="代币名称：" prop="symbol" required>
+          <el-input v-model="form.symbol" placeholder="请输入" />
         </el-form-item>
-        <el-form-item label="精度" prop="decimals">
-          <el-input-number v-model="form.decimals" :min="0" :max="20" style="width: 100%" />
+        <el-form-item label="合约地址：" prop="contract" required>
+          <el-input v-model="form.contract" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item label="精度：" prop="decimals">
+          <el-input v-model="form.decimals" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -132,7 +125,6 @@ import { TokenInfo, TokenQueryParams } from '@/types/blockchain'
 import { tokenList as mockTokenList } from '@/constants/mockData'
 import { saveToken, deleteToken } from '@/constants/mockApi'
 import { useRoute } from 'vue-router'
-import { chainOptions } from '@/constants/options'
 import { appState } from '@/constants/appState'
 
 // 查询参数
@@ -189,6 +181,14 @@ const rules = {
 
 // 路由相关
 const route = useRoute()
+
+// 获取公链下拉选项
+const chainSelectOptions = computed(() => {
+  return appState.blockchainData.map(chain => ({
+    label: chain.name,
+    value: chain.name
+  }))
+})
 
 // 获取代币列表
 const getList = () => {
@@ -268,13 +268,22 @@ const handleEdit = (row: TokenInfo) => {
 
 // 删除按钮点击事件
 const handleDelete = (row: TokenInfo) => {
-  try {
-    ElMessage.success('删除成功')
-    getList()
-  } catch (error) {
-    console.error('删除代币失败', error)
-    ElMessage.error('删除代币失败')
-  }
+  ElMessageBox.confirm(`删除后, 将无法获取到等笔交易发生后代币的余额信息, 确认要删除吗`, '系统提示', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await deleteToken(row.id)
+      ElMessage.success('删除成功')
+      getList()
+    } catch (error) {
+      console.error('删除代币失败', error)
+      ElMessage.error('删除代币失败')
+    }
+  }).catch(() => {
+    // 取消操作
+  })
 }
 
 // 提交表单

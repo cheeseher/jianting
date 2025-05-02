@@ -106,17 +106,47 @@
         </el-table-column>
         <el-table-column label="公链" prop="chain" width="100" />
         <el-table-column label="主币余额" prop="mainBalance" width="100" />
+        <el-table-column label="单笔触发金额" width="120">
+          <template #default="{ row }">
+            {{ row.triggerAmount || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="历史最大单笔金额百分比" width="180">
+          <template #default="{ row }">
+            {{ row.maxPercentage ? `${row.maxPercentage}%` : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="触发动作" width="150">
+          <template #default="{ row }">
+            {{ row.triggerAction ? formatTriggerAction(row.triggerAction) : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="代币余额" min-width="180">
           <template #default="{ row }">
-            <div @click="showTokenDetails(row)" class="token-balance-cell">
-              <div style="white-space: pre-line">{{ row.tokenBalance }}</div>
-              <el-icon><zoom-in /></el-icon>
+            <div class="token-balance-cell">
+              <div>
+                {{ formatTokenBalance(row.tokenBalance, 2) }}
+                <span v-if="getTokenCount(row.tokenBalance) > 2" class="view-all" @click.stop="(e) => showTokenDetails(row, e)">
+                  全部
+                </span>
+              </div>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="添加时间" prop="addTime" width="180" />
         <el-table-column label="更新时间" prop="updateTime" width="180" />
-        <el-table-column label="客户" prop="customer" width="100" />
+        <el-table-column label="客户" width="100">
+          <template #default="{ row }">
+            <span 
+              v-if="row.customers && row.customers.length > 0"
+              class="customer-number"
+              @click="showCustomerRelationDialog(row)"
+            >
+              {{ row.customers.length }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
@@ -146,34 +176,98 @@
       <el-dialog
         v-model="dialogVisible"
         :title="dialogType === 'add' ? '添加地址' : '编辑地址'"
-        width="550px"
+        width="800px"
         @closed="resetForm"
       >
-        <el-form
-          ref="formRef"
-          :model="form"
-          :rules="rules"
-          label-width="120px"
-        >
-          <el-form-item label="地址" prop="address" required>
-            <el-input v-model="form.address" placeholder="请输入地址" />
-          </el-form-item>
+        <el-tabs v-model="activeTab">
+          <el-tab-pane label="基本信息" name="basicInfo">
+            <el-form
+              ref="formRef"
+              :model="form"
+              :rules="rules"
+              label-width="120px"
+            >
+              <el-form-item label="地址" prop="address" required>
+                <el-input v-model="form.address" placeholder="请输入地址" />
+              </el-form-item>
+              
+              <el-form-item label="公链" prop="chain" required>
+                <el-select v-model="form.chain" placeholder="请选择公链" class="filter-dropdown">
+                  <el-option
+                    v-for="item in chainOptions.filter(item => item.value)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+              
+              <el-form-item label="客户" prop="customers">
+                <el-select
+                  v-model="form.customers"
+                  placeholder="请选择客户"
+                  multiple
+                  filterable
+                  collapse-tags
+                  collapse-tags-tooltip
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="item in customerOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </el-tab-pane>
           
-          <el-form-item label="公链" prop="chain" required>
-            <el-select v-model="form.chain" placeholder="请选择公链" class="filter-dropdown">
-              <el-option
-                v-for="item in chainOptions.filter(item => item.value)"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          
-          <el-form-item label="客户ID" prop="customer">
-            <el-input v-model="form.customer" placeholder="请输入客户ID" />
-          </el-form-item>
-        </el-form>
+          <el-tab-pane label="监控条件" name="monitorCondition" v-if="dialogType === 'edit'">
+            <div class="monitor-condition-container">
+              <el-form
+                ref="conditionFormRef"
+                :model="conditionForm"
+                :rules="conditionRules"
+                label-width="180px"
+                label-position="left"
+              >
+                <el-form-item label="单笔触发金额" prop="triggerAmount">
+                  <el-input-number
+                    v-model="conditionForm.triggerAmount"
+                    :min="0"
+                    :precision="2"
+                    style="width: 220px"
+                  />
+                </el-form-item>
+                <el-form-item label="历史最大单笔金额百分比" prop="maxPercentage">
+                  <el-input-number
+                    v-model="conditionForm.maxPercentage"
+                    :min="0"
+                    :precision="0"
+                    style="width: 220px"
+                    placeholder="请输入，如110表示110%"
+                  >
+                    <template #suffix>%</template>
+                  </el-input-number>
+                </el-form-item>
+                <el-form-item label="触发动作" prop="triggerAction">
+                  <el-select v-model="conditionForm.triggerAction" style="width: 220px">
+                    <el-option label="提交闪电转账" value="transfer" />
+                    <el-option label="提交多签" value="multi-sign" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="状态" prop="status">
+                  <el-switch
+                    v-model="conditionForm.status"
+                    active-text="启用"
+                    inactive-text="禁用"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
         
         <template #footer>
           <el-button @click="dialogVisible = false">取消</el-button>
@@ -184,26 +278,94 @@
       <!-- 代币余额详情弹窗 -->
       <el-dialog
         v-model="tokenDetailsVisible"
-        title="代币余额详情"
+        :title="`[${tokenDetailAddress?.address || '监听地址'}]代币余额`"
         width="500px"
       >
-        <div v-if="currentAddress">
-          <div class="token-details-header">
-            <div><strong>地址：</strong> {{ currentAddress.address }}</div>
-            <div><strong>公链：</strong> {{ currentAddress.chain }}</div>
+        <div v-if="tokenDetailAddress">
+          <div class="search-area">
+            <div class="search-input">
+              <span class="label">代币：</span>
+              <el-input
+                v-model="tokenSearchKeyword"
+                placeholder="输入代币名称"
+                style="width: 220px"
+              />
+            </div>
+            <div class="search-buttons">
+              <el-button type="primary" @click="searchTokens">搜索</el-button>
+              <el-button @click="resetTokenSearch">重置</el-button>
+            </div>
           </div>
           
-          <el-divider />
+          <el-table
+            :data="filteredTokens"
+            border
+            style="width: 100%"
+          >
+            <el-table-column type="index" label="序号" width="70" align="center" />
+            <el-table-column label="代币名称" prop="token" min-width="140" />
+            <el-table-column label="余额" prop="balance" min-width="120" align="right" />
+          </el-table>
           
-          <div class="token-details-content">
-            <div class="token-details-item" v-for="(balance, token) in parsedTokenBalances" :key="token">
-              <span class="token-name">{{ token }}:</span>
-              <span class="token-value">{{ balance }}</span>
+          <div class="pagination-container">
+            <el-pagination
+              v-model:current-page="tokenPagination.pageNum"
+              :page-size="tokenPagination.pageSize"
+              layout="total, prev, pager, next"
+              :total="tokenPagination.total"
+              @current-change="handleTokenPageChange"
+            />
+          </div>
+        </div>
+      </el-dialog>
+      
+      <!-- 客户关联弹窗 -->
+      <el-dialog
+        v-model="customerRelationVisible"
+        :title="`[${customerRelationAddress?.address || ''}]关联客户`"
+        width="700px"
+      >
+        <div v-if="customerRelationAddress" class="customer-relation-dialog">
+          <div class="search-area">
+            <div class="search-input">
+              <span class="label">客户：</span>
+              <el-input
+                v-model="customerSearchKeyword"
+                placeholder="输入客户ID/名称"
+                style="width: 220px"
+              />
             </div>
-            
-            <div class="no-tokens" v-if="Object.keys(parsedTokenBalances).length === 0">
-              暂无代币余额数据
+            <div class="search-buttons">
+              <el-button type="primary" @click="searchCustomerRelation">搜索</el-button>
+              <el-button @click="resetCustomerSearch">重置</el-button>
             </div>
+          </div>
+          
+          <el-table
+            v-loading="customerRelationLoading"
+            :data="customerCount"
+            border
+            style="width: 100%"
+          >
+            <el-table-column type="index" label="序号" width="70" align="center" />
+            <el-table-column label="客户ID" prop="id" min-width="120" />
+            <el-table-column label="客户名称" prop="name" min-width="180" />
+            <el-table-column label="操作" width="100" fixed="right" align="center">
+              <template #default="{ row }">
+                <el-button link type="danger" @click="removeCustomerRelation(row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          
+          <div class="pagination-container">
+            <el-pagination
+              v-if="customerCount.length > 0"
+              v-model:current-page="customerPagination.pageNum"
+              :page-size="customerPagination.pageSize"
+              layout="total, prev, pager, next"
+              :total="customerPagination.total"
+              @current-change="handleCustomerPageChange"
+            />
           </div>
         </div>
       </el-dialog>
@@ -213,12 +375,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import type { MonitorAddress } from '@/types/monitor'
 import { chainOptions } from '@/constants/options'
 import { deleteAddress, batchDeleteAddress, addAddress } from '@/constants/mockApi'
 import { ArrowDown, ZoomIn } from '@element-plus/icons-vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
 
 // 搜索表单
@@ -263,39 +425,108 @@ const pagination = reactive({
   total: 0
 })
 
+// 标签页状态
+const activeTab = ref('basicInfo')
+
 // 弹窗相关
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
 
+// 监控条件相关
+const conditionFormRef = ref<FormInstance>()
+const conditionForm = reactive({
+  triggerAmount: 0,
+  maxPercentage: 110,
+  triggerAction: 'transfer' as 'transfer' | 'multi-sign',
+  status: true
+})
+const conditionRules = reactive<FormRules>({
+  triggerAmount: [
+    { required: true, message: '请输入单笔触发金额', trigger: 'blur' },
+    { type: 'number', min: 0, message: '金额必须大于等于0', trigger: 'blur' }
+  ],
+  maxPercentage: [
+    { required: true, message: '请输入历史最大单笔金额百分比', trigger: 'blur' },
+    { type: 'number', min: 0, message: '百分比必须大于等于0', trigger: 'blur' }
+  ],
+  triggerAction: [
+    { required: true, message: '请选择触发动作', trigger: 'change' }
+  ]
+})
+
 // 代币余额详情相关
 const tokenDetailsVisible = ref(false)
-const currentAddress = ref<MonitorAddress | null>(null)
-const parsedTokenBalances = computed(() => {
-  if (!currentAddress.value || !currentAddress.value.tokenBalance) return {}
+const tokenDetailAddress = ref<MonitorAddress | null>(null)
+const tokenSearchKeyword = ref('')
+const tokenPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 解析代币余额为数组格式
+const tokenBalanceArray = computed(() => {
+  if (!tokenDetailAddress.value || !tokenDetailAddress.value.tokenBalance) return []
   
-  const result: Record<string, string> = {}
-  const lines = currentAddress.value.tokenBalance.split('\n')
+  const result: { token: string, balance: string }[] = []
+  const lines = tokenDetailAddress.value.tokenBalance.split('\n')
   
   lines.forEach(line => {
     const parts = line.split(':')
     if (parts.length === 2) {
       const token = parts[0].trim()
       const balance = parts[1].trim()
-      result[token] = balance
+      result.push({ token, balance })
     }
   })
   
   return result
 })
 
+// 根据搜索关键词过滤代币
+const filteredTokens = computed(() => {
+  const keyword = tokenSearchKeyword.value.toLowerCase()
+  let result = tokenBalanceArray.value
+  
+  if (keyword) {
+    result = result.filter(item => 
+      item.token.toLowerCase().includes(keyword)
+    )
+  }
+  
+  // 更新分页总数
+  tokenPagination.total = result.length
+  
+  // 应用分页
+  const start = (tokenPagination.pageNum - 1) * tokenPagination.pageSize
+  const end = Math.min(start + tokenPagination.pageSize, result.length)
+  return result.slice(start, end)
+})
+
+// 搜索代币
+const searchTokens = () => {
+  tokenPagination.pageNum = 1
+}
+
+// 重置代币搜索
+const resetTokenSearch = () => {
+  tokenSearchKeyword.value = ''
+  tokenPagination.pageNum = 1
+}
+
+// 处理代币分页
+const handleTokenPageChange = (page: number) => {
+  tokenPagination.pageNum = page
+}
+
 // 表单数据
 const form = reactive({
   id: '',
   address: '',
   chain: '',
-  customer: '',
+  customers: [] as string[],
   addTime: '',
   updateTime: ''
 })
@@ -313,6 +544,7 @@ const rules = {
 
 // 路由相关
 const route = useRoute()
+const router = useRouter()
 
 // 获取地址列表
 const fetchAddressList = () => {
@@ -332,8 +564,29 @@ const fetchAddressList = () => {
     }
     
     if (searchForm.customerId) {
-      filteredData = filteredData.filter(item => item.customer === searchForm.customerId)
+      filteredData = filteredData.filter(item => {
+        // 检查客户ID是否在customers数组中或等于customer字段
+        return (
+          (item.customers && item.customers.includes(searchForm.customerId)) || 
+          item.customer === searchForm.customerId
+        )
+      })
     }
+    
+    // 为每个地址填充监控条件数据和客户数据
+    filteredData = filteredData.map(item => {
+      // 模拟每个地址的监控条件数据
+      const monitorCondition = generateMockMonitorCondition(item.id || '')
+      
+      // 模拟每个地址的客户数据
+      const customers = item.customers || (item.customer ? [item.customer] : generateRandomCustomers(item.id || ''))
+      
+      return {
+        ...item,
+        ...monitorCondition,
+        customers
+      }
+    })
     
     tableData.value = filteredData
     pagination.total = filteredData.length
@@ -344,6 +597,48 @@ const fetchAddressList = () => {
   } finally {
     tableLoading.value = false
   }
+}
+
+// 生成模拟监控条件数据
+const generateMockMonitorCondition = (addressId: string) => {
+  // 基于地址ID生成一些模拟属性
+  const firstChar = addressId.charCodeAt(0) || 0
+  const hasCondition = firstChar % 4 !== 3 // 25%的地址没有监控条件
+  
+  if (!hasCondition) {
+    return {}
+  }
+  
+  return {
+    triggerAmount: 100 * ((firstChar % 5) + 1),
+    maxPercentage: 110 + (firstChar % 5) * 10, // 保证每个地址都有百分比值
+    triggerAction: firstChar % 3 === 0 ? 'transfer' : 'multi-sign' as 'transfer' | 'multi-sign',
+    monitorStatus: true
+  }
+}
+
+// 生成随机客户列表
+const generateRandomCustomers = (addressId: string): string[] => {
+  const firstChar = addressId.charCodeAt(0) || 0
+  const customersCount = appState.customerData.length
+  
+  if (customersCount === 0) {
+    return []
+  }
+  
+  // 根据地址ID生成一致的随机客户数量（1-3个）
+  const count = (firstChar % 3) + 1
+  const result: string[] = []
+  
+  for (let i = 0; i < count; i++) {
+    const index = (firstChar + i) % customersCount
+    const customer = appState.customerData[index]
+    if (customer && !result.includes(customer.id)) {
+      result.push(customer.id)
+    }
+  }
+  
+  return result
 }
 
 // 监听路由变化，确保每次进入页面时数据都会重新加载
@@ -412,8 +707,31 @@ const handleAddAddress = () => {
 // 编辑地址
 const handleEdit = (row: MonitorAddress) => {
   dialogType.value = 'edit'
-  Object.assign(form, row)
+  
+  // 复制基本信息
+  form.id = row.id || ''
+  form.address = row.address
+  form.chain = row.chain
+  form.addTime = row.addTime
+  form.updateTime = row.updateTime
+  
+  // 处理客户信息
+  if (row.customers && row.customers.length > 0) {
+    form.customers = [...row.customers]
+  } else if (row.customer) {
+    // 兼容旧数据
+    form.customers = [row.customer]
+  } else {
+    form.customers = []
+  }
+  
   dialogVisible.value = true
+  
+  // 填充监控条件表单
+  conditionForm.triggerAmount = row.triggerAmount || 0
+  conditionForm.maxPercentage = row.maxPercentage || 110
+  conditionForm.triggerAction = row.triggerAction || 'transfer'
+  conditionForm.status = row.monitorStatus !== undefined ? row.monitorStatus : true
 }
 
 // 删除地址
@@ -464,8 +782,11 @@ const handleExport = () => {
 }
 
 // 查看代币余额详情
-const showTokenDetails = (row: MonitorAddress) => {
-  currentAddress.value = row
+const showTokenDetails = (row: MonitorAddress, event?: Event) => {
+  if (event) {
+    event.stopPropagation()
+  }
+  tokenDetailAddress.value = row
   tokenDetailsVisible.value = true
 }
 
@@ -480,11 +801,37 @@ const submitForm = async () => {
     try {
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19)
       const data: MonitorAddress = {
-        ...form,
+        id: form.id,
+        address: form.address,
+        chain: form.chain,
+        customers: form.customers,
         mainBalance: '0',
         tokenBalance: '',
         addTime: form.addTime || now,
-        updateTime: now
+        updateTime: now,
+        maxPercentage: 110 // 确保有默认值
+      }
+      
+      // 如果是编辑模式且当前在监控条件标签页，保存监控条件
+      if (dialogType.value === 'edit' && activeTab.value === 'monitorCondition') {
+        if (conditionFormRef.value) {
+          const validCondition = await conditionFormRef.value.validate()
+            .then(() => true)
+            .catch(() => false)
+          
+          if (validCondition) {
+            // 将监控条件数据合并到地址数据中
+            Object.assign(data, {
+              triggerAmount: conditionForm.triggerAmount,
+              maxPercentage: conditionForm.maxPercentage,
+              triggerAction: conditionForm.triggerAction,
+              monitorStatus: conditionForm.status
+            })
+          } else {
+            submitLoading.value = false
+            return
+          }
+        }
       }
       
       await addAddress(data)
@@ -505,13 +852,151 @@ const resetForm = () => {
   form.id = ''
   form.address = ''
   form.chain = ''
-  form.customer = ''
+  form.customers = []
   form.addTime = ''
   form.updateTime = ''
   
   if (formRef.value) {
     formRef.value.resetFields()
   }
+  
+  // 重置监控条件表单
+  conditionForm.triggerAmount = 0
+  conditionForm.maxPercentage = 110
+  conditionForm.triggerAction = 'transfer'
+  conditionForm.status = true
+  
+  // 切换到基本信息标签
+  activeTab.value = 'basicInfo'
+}
+
+// 格式化触发动作
+const formatTriggerAction = (action: string) => {
+  const actionMap: Record<string, string> = {
+    'transfer': '提交闪电转账',
+    'multi-sign': '提交多签'
+  }
+  return actionMap[action] || action
+}
+
+// 客户选项
+const customerOptions = computed(() => {
+  return appState.customerData.map(item => ({
+    value: item.id,
+    label: `(${item.id}) ${item.name}`
+  }))
+})
+
+// 获取客户名称
+const getCustomerName = (id: string) => {
+  const customer = appState.customerData.find(item => item.id === id)
+  return customer ? `(${customer.id}) ${customer.name}` : id
+}
+
+// 用于地址关联客户弹窗的数据
+const customerRelationVisible = ref(false)
+const customerRelationAddress = ref<MonitorAddress | null>(null)
+const customerSearchKeyword = ref('')
+const customerRelationLoading = ref(false)
+const customerPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 过滤后的客户列表
+const filteredCustomers = computed(() => {
+  if (!customerRelationAddress.value || !customerRelationAddress.value.customers) return []
+  
+  // 获取客户详细信息
+  const customers = customerRelationAddress.value.customers.map(id => {
+    const customer = appState.customerData.find(c => c.id === id)
+    return customer || { id, name: id }
+  })
+  
+  // 根据关键词筛选
+  const keyword = customerSearchKeyword.value.toLowerCase()
+  if (!keyword) return customers
+  
+  return customers.filter(c => 
+    c.id.toLowerCase().includes(keyword) || 
+    c.name.toLowerCase().includes(keyword)
+  )
+})
+
+// 显示关联客户弹窗
+const showCustomerRelationDialog = (row: MonitorAddress) => {
+  customerRelationAddress.value = row
+  customerSearchKeyword.value = ''
+  customerPagination.pageNum = 1
+  customerRelationVisible.value = true
+  
+  // 计算总数
+  if (row.customers) {
+    customerPagination.total = row.customers.length
+  }
+}
+
+// 搜索关联客户
+const searchCustomerRelation = () => {
+  customerPagination.pageNum = 1
+  // 实际项目中这里需要重新加载数据
+}
+
+// 重置客户搜索
+const resetCustomerSearch = () => {
+  customerSearchKeyword.value = ''
+  customerPagination.pageNum = 1
+  // 实际项目中这里需要重新加载数据
+}
+
+// 移除客户关联
+const removeCustomerRelation = (customerId: string) => {
+  if (!customerRelationAddress.value || !customerRelationAddress.value.customers) return
+  
+  ElMessageBox.confirm(
+    '删除后，该客户将无法收到此地址的交易通知。',
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    // 实际项目中这里需要调用API
+    if (customerRelationAddress.value && customerRelationAddress.value.customers) {
+      customerRelationAddress.value.customers = customerRelationAddress.value.customers.filter(id => id !== customerId)
+      ElMessage.success('删除成功')
+    }
+  }).catch(() => {})
+}
+
+// 处理客户分页
+const handleCustomerPageChange = (page: number) => {
+  customerPagination.pageNum = page
+  // 实际项目中这里需要重新加载数据
+}
+
+const customerCount = computed(() => {
+  const start = (customerPagination.pageNum - 1) * customerPagination.pageSize
+  const end = Math.min(start + customerPagination.pageSize, filteredCustomers.value.length)
+  return filteredCustomers.value.slice(start, end)
+})
+
+// 格式化代币余额，只显示最多maxCount种代币
+const formatTokenBalance = (tokenBalance: string | undefined, maxCount: number): string => {
+  if (!tokenBalance) return '-'
+  
+  const lines = tokenBalance.split('\n')
+  if (lines.length <= maxCount) return tokenBalance
+  
+  return lines.slice(0, maxCount).join('\n')
+}
+
+// 获取代币数量
+const getTokenCount = (tokenBalance: string | undefined): number => {
+  if (!tokenBalance) return 0
+  return tokenBalance.split('\n').length
 }
 
 // 初始化
@@ -583,15 +1068,44 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.customer-tags {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.customer-count {
+  cursor: pointer !important;
+  transition: all 0.3s;
+  background-color: #909399 !important;
+  color: white !important;
+}
+
+.customer-count:hover {
+  background-color: #409EFF !important;
+  transform: scale(1.05);
+}
+
 .token-balance-cell {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  cursor: pointer;
 }
 
-.token-balance-cell:hover {
-  background-color: #f5f7fa;
+.token-balance-cell > div {
+  white-space: pre-line;
+}
+
+.token-balance-cell .view-all {
+  color: #409EFF;
+  cursor: pointer;
+  margin-left: 5px;
+  font-weight: 500;
+}
+
+.token-balance-cell .view-all:hover {
+  color: #66b1ff;
+  text-decoration: underline;
 }
 
 .token-details-header {
@@ -627,5 +1141,66 @@ onMounted(() => {
   text-align: center;
   padding: 20px;
   color: #909399;
+}
+
+/* 监控条件相关样式 */
+.monitor-condition-container {
+  margin-top: 10px;
+  padding: 0 20px;
+}
+
+.customer-relation-dialog {
+  padding: 20px;
+}
+
+.search-area {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  white-space: nowrap;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.search-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.customer-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.customer-display span {
+  margin-right: 5px;
+}
+
+.clickable-customer {
+  cursor: pointer;
+  color: #409EFF;
+  text-decoration: underline;
+}
+
+.customer-number {
+  cursor: pointer;
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.customer-number:hover {
+  color: #66b1ff;
 }
 </style> 

@@ -6,44 +6,59 @@ import { Customer } from '@/types/customer'
 export const addressList: MonitorAddress[] = [
   {
     id: '1',
-    address: '111111111111111111',
+    address: '0x8C3fa94D1F4dF3a91296C6D380E092A0a98198DA',
     chain: 'BSC',
-    mainBalance: '10',
-    tokenBalance: 'usdt: 1000\nusdc: 1000',
-    addTime: '2024-09-27 15:00:00',
-    updateTime: '2024-09-27 15:00:00',
-    customer: '5'
+    mainBalance: '245.78',
+    tokenBalance: 'USDT: 12850.45\nUSDC: 5632.18\nBUSD: 3421.67\nBNB: 8.42',
+    addTime: '2024-06-15 09:23:45',
+    updateTime: '2024-08-21 16:38:12',
+    customer: '100001',
+    maxPercentage: 120
   },
   {
     id: '2',
-    address: '222222222222222',
+    address: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
     chain: 'ETH',
-    mainBalance: '10',
-    tokenBalance: 'usdt: 1000\nusdc: 1000',
-    addTime: '2024-09-27 15:00:00',
-    updateTime: '2024-09-27 15:00:00',
-    customer: '6'
+    mainBalance: '18.42',
+    tokenBalance: 'USDT: 25600\nDAI: 15700.23\nUSDC: 8932.56\nSHIB: 15000000',
+    addTime: '2024-05-28 14:32:19',
+    updateTime: '2024-08-23 11:45:39',
+    customer: '100002',
+    maxPercentage: 135
   },
   {
     id: '3',
-    address: '333333333333333',
+    address: 'TNPeeaaFB7K33cCZzBHZZv1xUbhJbQJbEc',
     chain: 'TRON',
-    mainBalance: '10',
-    tokenBalance: 'usdt: 1000\nusdc: 1000',
-    addTime: '2024-09-27 15:00:00',
-    updateTime: '2024-09-27 15:00:00',
-    customer: '5',
-    customerId: '表示全部'
+    mainBalance: '35621.5',
+    tokenBalance: 'USDT: 89500.62\nJST: 125000\nBTT: 3500000\nWIN: 2750000',
+    addTime: '2024-04-12 08:15:27',
+    updateTime: '2024-08-18 23:41:08',
+    customer: '100003',
+    customerId: '表示全部',
+    maxPercentage: 110
   },
   {
     id: '4',
-    address: '444444444444444',
+    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     chain: 'BTC',
-    mainBalance: '10',
-    tokenBalance: 'usdt: 1000\nusdc: 1000',
-    addTime: '2024-09-27 15:00:00',
-    updateTime: '2024-09-27 15:00:00',
-    customer: '8'
+    mainBalance: '1.25',
+    tokenBalance: 'WBTC: 0.3\nBTCB: 0.45',
+    addTime: '2024-07-03 19:47:32',
+    updateTime: '2024-08-25 07:12:53',
+    customer: '100004',
+    maxPercentage: 125
+  },
+  {
+    id: '5',
+    address: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    chain: 'ETH',
+    mainBalance: '7.81',
+    tokenBalance: 'USDT: 4578.23\nUNI: 523.45\nLINK: 187.62\nMATIC: 1250.78',
+    addTime: '2024-06-21 10:34:29',
+    updateTime: '2024-08-19 21:56:17',
+    customer: '100001',
+    maxPercentage: 150
   }
 ]
 
@@ -51,35 +66,43 @@ export const addressList: MonitorAddress[] = [
 export const addressChangeRecords: AddressChangeRecord[] = [
   {
     id: '1',
-    address: '111111111111111111',
+    address: '0x8C3fa94D1F4dF3a91296C6D380E092A0a98198DA',
     chain: 'BSC',
     type: '添加',
-    operator: '123 (王)',
-    operateTime: '2024-09-27 15:00:00'
+    operator: '张明 (管理员)',
+    operateTime: '2024-06-15 09:23:45'
   },
   {
     id: '2',
-    address: '222222222222222',
+    address: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
     chain: 'ETH',
-    type: '删除',
-    operator: '123 (王)',
-    operateTime: '2024-09-27 15:00:00'
+    type: '添加',
+    operator: '刘强 (运维)',
+    operateTime: '2024-05-28 14:32:19'
   },
   {
     id: '3',
-    address: '333333333333333',
+    address: 'TNPeeaaFB7K33cCZzBHZZv1xUbhJbQJbEc',
     chain: 'TRON',
     type: '添加',
-    operator: '223 (刘)',
-    operateTime: '2024-09-27 15:00:00'
+    operator: '王健 (管理员)',
+    operateTime: '2024-04-12 08:15:27'
   },
   {
     id: '4',
-    address: '444444444444444',
+    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     chain: 'BTC',
-    type: '删除',
-    operator: '123 (王)',
-    operateTime: '2024-09-27 15:00:00'
+    type: '添加',
+    operator: '赵宇 (运维)',
+    operateTime: '2024-07-03 19:47:32'
+  },
+  {
+    id: '5',
+    address: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    chain: 'ETH',
+    type: '添加',
+    operator: '张明 (管理员)',
+    operateTime: '2024-06-21 10:34:29'
   }
 ]
 
@@ -87,59 +110,59 @@ export const addressChangeRecords: AddressChangeRecord[] = [
 export const callbackRecords: CallbackRecord[] = [
   {
     id: '123345',
-    hash: '99999999',
-    monitorAddress: '111111111111111111',
-    targetAddress: '444444444444444',
+    hash: '0x7d2b8c6d19f25b83d34957c9f5428a0fe3fc7f2ab1e8338135d3c3ebe4600af7',
+    monitorAddress: '0x8C3fa94D1F4dF3a91296C6D380E092A0a98198DA',
+    targetAddress: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
     type: '转入',
     chain: 'BSC',
     tokenName: 'BNB',
     tokenContract: '',
-    amount: '+10',
-    customer: '123 (王)',
-    callbackTime: '2024-09-27 15:00:00',
+    amount: '+3.25',
+    customer: '张三 (100001)',
+    callbackTime: '2024-08-15 13:42:18',
     status: '成功'
   },
   {
     id: '234536',
-    hash: '99999999',
-    monitorAddress: '111111111111111111',
-    targetAddress: '444444444444444',
-    type: '转入',
-    chain: 'BSC',
-    tokenName: 'BNB',
-    tokenContract: '',
-    amount: '+10',
-    customer: '123 (刘)',
-    callbackTime: '2024-09-27 15:00:00',
+    hash: '0x9a3b7f5d2c8e1a4b6d5e8f9a2c1d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d',
+    monitorAddress: '0xF977814e90dA44bFA03b6295A0616a897441aceC',
+    targetAddress: '0x3845badAde8e6dFF049820680d1F14bD3903a5d0',
+    type: '转出',
+    chain: 'ETH',
+    tokenName: 'USDT',
+    tokenContract: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: '-2500.00',
+    customer: '李四 (100002)',
+    callbackTime: '2024-08-18 09:15:33',
     status: '失败'
   },
   {
     id: '123344657474',
-    hash: '99999999',
-    monitorAddress: '111111111111111111',
-    targetAddress: '444444444444444',
+    hash: '0xe1c2d3b4a5f6e7d8c9b0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2',
+    monitorAddress: 'TNPeeaaFB7K33cCZzBHZZv1xUbhJbQJbEc',
+    targetAddress: 'TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9',
     type: '转入',
-    chain: 'BSC',
-    tokenName: 'BNB',
-    tokenContract: '',
-    amount: '+10',
-    customer: '005 (鹏)',
-    callbackTime: '2024-09-27 15:00:00',
+    chain: 'TRON',
+    tokenName: 'USDT',
+    tokenContract: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    amount: '+15000.00',
+    customer: '王五 (100003)',
+    callbackTime: '2024-08-20 17:28:56',
     status: '成功'
   },
   {
     id: '234234',
-    hash: '888888',
-    monitorAddress: '444444444444444',
-    targetAddress: '111111111111111111',
+    hash: 'bc1qasdfghjklzxcvbnm0987654321qwertyuiop',
+    monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    targetAddress: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
     type: '转出',
     chain: 'BTC',
     tokenName: 'BTC',
     tokenContract: '',
-    amount: '-10',
-    customer: '123 (王)',
-    callbackTime: '2024-09-27 15:00:00',
-    status: '失败'
+    amount: '-0.35',
+    customer: '赵六 (100004)',
+    callbackTime: '2024-08-22 05:37:42',
+    status: '成功'
   }
 ]
 

@@ -5,10 +5,17 @@ export interface MonitorAddress {
   chain: string;      // 公链
   mainBalance: string; // 主币余额
   tokenBalance: string; // 代币余额
-  customer?: string;  // 所属客户
-  customerId?: string; // 客户ID
+  customers?: string[];  // 所属客户列表
+  customer?: string;  // 所属客户（兼容旧数据）
+  customerId?: string; // 客户ID（兼容旧数据）
   addTime: string;    // 添加时间
   updateTime: string; // 更新时间
+  
+  // 监控条件相关字段
+  triggerAmount?: number;     // 单笔触发金额
+  maxPercentage: number;     // 历史最大单笔金额百分比
+  triggerAction?: 'transfer' | 'multi-sign';  // 触发动作
+  monitorStatus?: boolean;    // 监控状态
 }
 
 // 地址查询参数
@@ -80,7 +87,6 @@ export interface CallbackRecordQueryParams {
   type?: string;        // 类型
   chain?: string;       // 公链
   tokenName?: string;   // 代币名称
-  tokenContract?: string; // 代币合约
   customer?: string;    // 客户
   timeRange?: string[]; // 回调时间范围
   status?: string;      // 回调状态

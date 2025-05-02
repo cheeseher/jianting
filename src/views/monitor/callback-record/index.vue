@@ -32,9 +32,6 @@
         <el-form-item label="代币名称">
           <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable />
         </el-form-item>
-        <el-form-item label="代币合约">
-          <el-input v-model="queryParams.tokenContract" placeholder="输入关键词" clearable />
-        </el-form-item>
       </el-form>
 
       <el-form :model="queryParams" ref="queryFormRef" :inline="true" class="search-form">
@@ -91,7 +88,6 @@
         <el-table-column prop="type" label="类型" min-width="80" />
         <el-table-column prop="chain" label="公链" min-width="80" />
         <el-table-column prop="tokenName" label="代币名称" min-width="100" />
-        <el-table-column prop="tokenContract" label="代币合约" min-width="180" />
         <el-table-column prop="amount" label="转账数量" min-width="100" />
         <el-table-column prop="customer" label="客户" min-width="100" />
         <el-table-column prop="callbackTime" label="回调时间" min-width="160" />
@@ -140,7 +136,6 @@ const queryParams = reactive<CallbackRecordQueryParams>({
   type: '',
   chain: '',
   tokenName: '',
-  tokenContract: '',
   customer: '',
   status: '',
   pageNum: 1,

@@ -44,7 +44,7 @@ const routes: Array<RouteRecordRaw> = [
             path: 'address-record',
             name: 'AddressRecord',
             component: () => import('../views/monitor/address-record/index.vue'),
-            meta: { title: '地址添加记录' }
+            meta: { title: '地址变动记录' }
           },
           {
             path: 'monitor-record',
