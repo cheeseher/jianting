@@ -229,6 +229,11 @@ const getList = () => {
 
 // 监听路由变化，确保每次进入页面时数据都会重新加载
 watch(() => route.fullPath, () => {
+  // 检查URL中是否有hash参数
+  const hashParam = route.query.hash
+  if (hashParam) {
+    queryParams.hash = hashParam as string
+  }
   getList()
 }, { immediate: true })
 
@@ -266,6 +271,11 @@ const handleCurrentChange = (page: number) => {
 
 // 页面挂载时加载数据
 onMounted(() => {
+  // 检查URL中是否有hash参数
+  const hashParam = route.query.hash
+  if (hashParam) {
+    queryParams.hash = hashParam as string
+  }
   getList()
 })
 </script>

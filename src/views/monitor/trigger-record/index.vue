@@ -69,6 +69,7 @@
         style="width: 100%"
         border
       >
+        <el-table-column prop="id" label="记录ID" min-width="80" />
         <el-table-column prop="triggerTime" label="触发时间" min-width="160" />
         <el-table-column prop="monitorAddress" label="监听地址" min-width="180" />
         <el-table-column prop="customer" label="客户" min-width="120" />
@@ -181,33 +182,39 @@ const getList = () => {
     // 直接使用全局状态数据，无需异步操作
     let filteredData = [...appState.triggerData]
     
-    // 应用过滤
-    if (queryParams.monitorAddress) {
-      filteredData = filteredData.filter(item => 
-        item.monitorAddress.includes(queryParams.monitorAddress as string))
-    }
-    
-    if (queryParams.customer) {
-      filteredData = filteredData.filter(item => 
-        item.customer.includes(queryParams.customer as string))
-    }
-    
-    if (queryParams.triggerAction) {
-      filteredData = filteredData.filter(item => item.triggerAction === queryParams.triggerAction)
-    }
-    
-    if (queryParams.actionStatus) {
-      filteredData = filteredData.filter(item => item.actionStatus === queryParams.actionStatus)
-    }
-    
-    // 时间范围过滤
-    if (queryParams.timeRange && queryParams.timeRange.length === 2) {
-      const startDate = new Date(queryParams.timeRange[0]).getTime()
-      const endDate = new Date(queryParams.timeRange[1]).getTime()
-      filteredData = filteredData.filter(item => {
-        const itemTime = new Date(item.triggerTime).getTime()
-        return itemTime >= startDate && itemTime <= endDate
-      })
+    // 检查是否有ID查询参数
+    const queryId = route.query.id
+    if (queryId) {
+      filteredData = filteredData.filter(item => item.id === queryId)
+    } else {
+      // 如果没有ID查询参数，则应用其他过滤条件
+      if (queryParams.monitorAddress) {
+        filteredData = filteredData.filter(item => 
+          item.monitorAddress.includes(queryParams.monitorAddress as string))
+      }
+      
+      if (queryParams.customer) {
+        filteredData = filteredData.filter(item => 
+          item.customer.includes(queryParams.customer as string))
+      }
+      
+      if (queryParams.triggerAction) {
+        filteredData = filteredData.filter(item => item.triggerAction === queryParams.triggerAction)
+      }
+      
+      if (queryParams.actionStatus) {
+        filteredData = filteredData.filter(item => item.actionStatus === queryParams.actionStatus)
+      }
+      
+      // 时间范围过滤
+      if (queryParams.timeRange && queryParams.timeRange.length === 2) {
+        const startDate = new Date(queryParams.timeRange[0]).getTime()
+        const endDate = new Date(queryParams.timeRange[1]).getTime()
+        filteredData = filteredData.filter(item => {
+          const itemTime = new Date(item.triggerTime).getTime()
+          return itemTime >= startDate && itemTime <= endDate
+        })
+      }
     }
     
     recordList.value = filteredData
