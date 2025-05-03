@@ -103,6 +103,47 @@
         </el-table-column>
         <el-table-column prop="customer" label="客户" min-width="120" />
         <el-table-column prop="callbackTime" label="交易时间" min-width="160" />
+        
+        <!-- 新增字段：是否命中监控 -->
+        <el-table-column label="是否命中监控" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.isTriggered ? 'danger' : 'info'" size="small">
+              {{ row.isTriggered ? '已命中' : '未命中' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <!-- 新增字段：命中规则描述 -->
+        <el-table-column label="命中规则描述" min-width="200">
+          <template #default="{ row }">
+            <span v-if="row.isTriggered && row.triggerDesc">{{ row.triggerDesc }}</span>
+            <span v-else-if="row.isTriggered && row.isBySecondaryList">二次列表自动触发</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        
+        <!-- 新增字段：异常记录ID -->
+        <el-table-column label="异常记录ID" width="120">
+          <template #default="{ row }">
+            <el-button 
+              v-if="row.isTriggered && row.triggerId" 
+              type="primary" 
+              link 
+              @click="viewTriggerRecord(row)"
+            >
+              {{ row.triggerId }}
+            </el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        
+        <!-- 新增字段：是否二次列表自动触发 -->
+        <el-table-column label="二次列表" width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.isBySecondaryList" type="success" size="small">自动触发</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页组件 -->
@@ -126,7 +167,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { CallbackRecord } from '@/types/monitor'
 import { chainOptions, transactionTypeOptions } from '@/constants/options'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
 
 // 查询参数
@@ -154,7 +195,7 @@ watch(dateRange, (val) => {
 // 数据加载状态
 const loading = ref(false)
 // 记录列表
-const recordList = ref<CallbackRecord[]>([])
+const recordList = ref<EnhancedCallbackRecord[]>([])
 // 总条数
 const total = ref(0)
 
@@ -164,6 +205,15 @@ const queryFormRef2 = ref()
 
 // 路由相关
 const route = useRoute()
+const router = useRouter()
+
+// 扩展CallbackRecord类型，添加监控相关字段
+interface EnhancedCallbackRecord extends CallbackRecord {
+  isTriggered?: boolean;
+  triggerDesc?: string;
+  triggerId?: string;
+  isBySecondaryList?: boolean;
+}
 
 // 获取监听记录列表
 const getList = () => {
@@ -212,6 +262,53 @@ const getList = () => {
         return callbackTime >= startTime && callbackTime <= endTime
       })
     }
+    
+    // 为每条记录增加监控相关字段
+    filteredData = filteredData.map(item => {
+      // 使用hash值最后一位数字作为是否命中监控的判断依据
+      const hashLastDigit = parseInt(item.hash.slice(-1), 16)
+      const isTriggered = hashLastDigit % 3 !== 2 // 约2/3的记录命中监控
+      
+      // 使用hash值倒数第二位数字判断是否为二次列表自动触发
+      const hashSecondLastDigit = parseInt(item.hash.slice(-2, -1), 16)
+      const isBySecondaryList = hashSecondLastDigit % 4 === 0 // 约1/4的命中记录是二次列表触发
+      
+      // 为命中记录生成触发描述和异常记录ID
+      let triggerDesc = ''
+      let triggerId = ''
+      
+      if (isTriggered) {
+        // 生成模拟的触发描述
+        const amountValue = item.amount.replace(/[^\d.]/g, '')
+        const amountNum = parseFloat(amountValue)
+        
+        if (isBySecondaryList) {
+          triggerDesc = '二次列表自动触发'
+        } else if (amountNum > 1000) {
+          triggerDesc = `单笔金额≥${Math.floor(amountNum / 1000) * 1000}${item.tokenName} 且 达到历史最大金额的${110 + hashLastDigit * 5}%`
+        } else {
+          triggerDesc = `单笔金额≥${Math.floor(amountNum)}${item.tokenName}`
+        }
+        
+        // 生成模拟的异常记录ID，确保与异常触发记录页面的ID格式一致
+        // 从异常触发记录中找到与当前记录的hash匹配的记录，使用其ID
+        const matchedTriggerRecord = appState.triggerData.find(record => record.hash === item.hash)
+        if (matchedTriggerRecord) {
+          triggerId = matchedTriggerRecord.id
+        } else {
+          // 如果没有找到匹配的记录，生成一个1000-9999之间的四位数字ID
+          triggerId = (1000 + (hashLastDigit * 123 + new Date(item.callbackTime).getTime()) % 9000).toString()
+        }
+      }
+      
+      return {
+        ...item,
+        isTriggered,
+        isBySecondaryList: isTriggered && isBySecondaryList, // 只有命中监控的才可能是二次列表触发
+        triggerDesc,
+        triggerId
+      }
+    })
     
     // 分页处理
     const start = (queryParams.pageNum - 1) * queryParams.pageSize
@@ -278,6 +375,18 @@ onMounted(() => {
   }
   getList()
 })
+
+// 新增的viewTriggerRecord函数
+const viewTriggerRecord = (row: EnhancedCallbackRecord) => {
+  // 实现跳转到异常触发记录页面的逻辑
+  router.push({
+    path: '/monitor/trigger-record',
+    query: {
+      id: row.triggerId // 使用id作为参数名，与异常触发记录页面接收的参数名一致
+    }
+  })
+  ElMessage.success(`跳转到异常记录ID: ${row.triggerId}`)
+}
 </script>
 
 <style scoped>
