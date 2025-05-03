@@ -33,6 +33,23 @@
         <el-table-column prop="address" label="公链地址" min-width="180" />
         <el-table-column prop="mainCurrency" label="主币" min-width="100" />
         <el-table-column prop="tokenCount" label="代币数量" min-width="100" />
+        <el-table-column prop="triggerAmount" label="单笔触发金额" min-width="120">
+          <template #default="{ row }">
+            {{ row.triggerAmount || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="maxPercentage" label="历史最大单笔金额百分比" min-width="160">
+          <template #default="{ row }">
+            {{ row.maxPercentage ? `${row.maxPercentage}%` : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="triggerAction" label="触发动作" min-width="120">
+          <template #default="{ row }">
+            <span v-if="row.triggerAction === 'transfer'">提交闪电转账</span>
+            <span v-else-if="row.triggerAction === 'multi-sign'">提交多签</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="explorerUrl" label="浏览器地址" min-width="180" />
         <el-table-column prop="addTime" label="添加时间" min-width="160" />
         <el-table-column label="操作" width="150" fixed="right">
@@ -63,25 +80,81 @@
         width="500px"
         append-to-body
       >
-        <el-form
-          ref="formRef"
-          :model="form"
-          :rules="rules"
-          label-width="100px"
-        >
-          <el-form-item label="公链名称" prop="name">
-            <el-input v-model="form.name" placeholder="请输入公链名称" />
-          </el-form-item>
-          <el-form-item label="公链地址" prop="address">
-            <el-input v-model="form.address" placeholder="请输入公链地址" />
-          </el-form-item>
-          <el-form-item label="主币" prop="mainCurrency">
-            <el-input v-model="form.mainCurrency" placeholder="请输入主币名称" />
-          </el-form-item>
-          <el-form-item label="浏览器地址" prop="explorerUrl">
-            <el-input v-model="form.explorerUrl" placeholder="请输入浏览器地址" />
-          </el-form-item>
-        </el-form>
+        <el-tabs v-model="activeTab">
+          <el-tab-pane label="基本信息" name="basicInfo">
+            <el-form
+              ref="formRef"
+              :model="form"
+              :rules="rules"
+              label-width="100px"
+            >
+              <el-form-item label="公链名称" prop="name">
+                <el-input v-model="form.name" placeholder="请输入公链名称" />
+              </el-form-item>
+              <el-form-item label="公链地址" prop="address">
+                <el-input v-model="form.address" placeholder="请输入公链地址" />
+              </el-form-item>
+              <el-form-item label="主币" prop="mainCurrency">
+                <el-input v-model="form.mainCurrency" placeholder="请输入主币名称" />
+              </el-form-item>
+              <el-form-item label="浏览器地址" prop="explorerUrl">
+                <el-input v-model="form.explorerUrl" placeholder="请输入浏览器地址" />
+              </el-form-item>
+            </el-form>
+          </el-tab-pane>
+          
+          <el-tab-pane label="监控条件" name="monitorCondition" v-if="dialogType === 'edit'">
+            <div class="monitor-condition-container">
+              <el-form
+                ref="conditionFormRef"
+                :model="conditionForm"
+                :rules="conditionRules"
+                label-width="180px"
+                label-position="left"
+              >
+                <el-form-item label="单笔触发金额" prop="triggerAmount">
+                  <el-input-number
+                    v-model="conditionForm.triggerAmount"
+                    :min="0"
+                    :precision="2"
+                    style="width: 220px"
+                  />
+                </el-form-item>
+                <el-form-item label="历史最大单笔金额百分比" prop="maxPercentage">
+                  <el-input-number
+                    v-model="conditionForm.maxPercentage"
+                    :min="0"
+                    :precision="0"
+                    style="width: 220px"
+                    placeholder="请输入，如110表示110%"
+                  >
+                    <template #suffix>%</template>
+                  </el-input-number>
+                </el-form-item>
+                <el-form-item label="触发动作" prop="triggerAction">
+                  <el-select v-model="conditionForm.triggerAction" style="width: 220px">
+                    <el-option label="提交闪电转账" value="transfer" />
+                    <el-option label="提交多签" value="multi-sign" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="二次列表" prop="secondaryList">
+                  <el-switch
+                    v-model="conditionForm.secondaryList"
+                    active-text="启用"
+                    inactive-text="禁用"
+                  />
+                </el-form-item>
+                <el-form-item label="监控状态" prop="monitorStatus">
+                  <el-switch
+                    v-model="conditionForm.monitorStatus"
+                    active-text="启用"
+                    inactive-text="禁用"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
@@ -95,7 +168,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { BlockchainInfo, BlockchainQueryParams } from '@/types/blockchain'
 import { useRoute } from 'vue-router'
 import { saveBlockchain, deleteBlockchain } from '@/constants/mockApi'
@@ -121,12 +194,16 @@ const chainList = ref<BlockchainInfo[]>([])
 const total = ref(0)
 
 // 查询表单引用
-const queryFormRef = ref()
+const queryFormRef = ref<FormInstance>()
 
 // 对话框相关
 const dialogVisible = ref(false)
+const dialogType = ref<'add' | 'edit'>('add')
 const dialogTitle = computed(() => form.id ? '编辑公链' : '添加公链')
-const formRef = ref()
+const formRef = ref<FormInstance>()
+const activeTab = ref('basicInfo')
+
+// 表单数据
 const form = reactive<BlockchainInfo>({
   id: '',
   name: '',
@@ -134,7 +211,38 @@ const form = reactive<BlockchainInfo>({
   mainCurrency: '',
   tokenCount: 0,
   explorerUrl: '',
-  addTime: ''
+  addTime: '',
+  // 增加监控条件字段
+  triggerAmount: 0,
+  maxPercentage: 110,
+  triggerAction: 'transfer',
+  secondaryList: false,
+  monitorStatus: true
+})
+
+// 监控条件相关
+const conditionFormRef = ref<FormInstance>()
+const conditionForm = reactive({
+  triggerAmount: 0,
+  maxPercentage: 110,
+  triggerAction: 'transfer' as 'transfer' | 'multi-sign',
+  secondaryList: false,
+  monitorStatus: true
+})
+
+// 监控条件校验规则
+const conditionRules = reactive<FormRules>({
+  triggerAmount: [
+    { required: true, message: '请输入单笔触发金额', trigger: 'blur' },
+    { type: 'number', min: 0, message: '金额必须大于等于0', trigger: 'blur' }
+  ],
+  maxPercentage: [
+    { required: true, message: '请输入历史最大单笔金额百分比', trigger: 'blur' },
+    { type: 'number', min: 0, message: '百分比必须大于等于0', trigger: 'blur' }
+  ],
+  triggerAction: [
+    { required: true, message: '请选择触发动作', trigger: 'change' }
+  ]
 })
 
 // 表单验证规则
@@ -170,6 +278,17 @@ const getList = () => {
         item.mainCurrency.includes(queryParams.mainCurrency as string))
     }
     
+    // 为每个公链生成模拟的监控条件数据
+    filteredData = filteredData.map(item => {
+      // 生成模拟监控条件数据
+      const monitorCondition = generateMockMonitorCondition(item.id || '')
+      
+      return {
+        ...item,
+        ...monitorCondition
+      }
+    })
+    
     chainList.value = filteredData
     total.value = filteredData.length
   } catch (error) {
@@ -179,6 +298,25 @@ const getList = () => {
     total.value = 0
   } finally {
     loading.value = false
+  }
+}
+
+// 生成模拟监控条件数据
+const generateMockMonitorCondition = (chainId: string) => {
+  // 基于公链ID生成一些模拟属性
+  const firstChar = chainId.charCodeAt(0) || 0
+  const hasCondition = firstChar % 4 !== 3 // 25%的公链没有监控条件
+  
+  if (!hasCondition) {
+    return {}
+  }
+  
+  return {
+    triggerAmount: 100 * ((firstChar % 5) + 1),
+    maxPercentage: 110 + (firstChar % 5) * 10, // 保证每个公链都有百分比值
+    triggerAction: firstChar % 3 === 0 ? 'transfer' : 'multi-sign' as 'transfer' | 'multi-sign',
+    secondaryList: firstChar % 2 === 0,
+    monitorStatus: true
   }
 }
 
@@ -203,13 +341,23 @@ const handleReset = () => {
 // 添加按钮点击事件
 const handleAdd = () => {
   resetForm()
+  dialogType.value = 'add'
   dialogVisible.value = true
 }
 
 // 编辑按钮点击事件
 const handleEdit = (row: BlockchainInfo) => {
   resetForm()
+  dialogType.value = 'edit'
   Object.assign(form, row)
+  
+  // 填充监控条件表单
+  conditionForm.triggerAmount = row.triggerAmount || 0
+  conditionForm.maxPercentage = row.maxPercentage || 110
+  conditionForm.triggerAction = row.triggerAction || 'transfer'
+  conditionForm.secondaryList = row.secondaryList || false
+  conditionForm.monitorStatus = row.monitorStatus !== undefined ? row.monitorStatus : true
+  
   dialogVisible.value = true
 }
 
@@ -239,6 +387,28 @@ const handleSubmit = async () => {
     if (!valid) return
     
     try {
+      // 如果是编辑模式且当前在监控条件标签页，需要验证并保存监控条件
+      if (dialogType.value === 'edit' && activeTab.value === 'monitorCondition') {
+        if (conditionFormRef.value) {
+          const validCondition = await conditionFormRef.value.validate()
+            .then(() => true)
+            .catch(() => false)
+          
+          if (validCondition) {
+            // 将监控条件数据合并到公链数据中
+            Object.assign(form, {
+              triggerAmount: conditionForm.triggerAmount,
+              maxPercentage: conditionForm.maxPercentage,
+              triggerAction: conditionForm.triggerAction,
+              secondaryList: conditionForm.secondaryList,
+              monitorStatus: conditionForm.monitorStatus
+            })
+          } else {
+            return
+          }
+        }
+      }
+      
       await saveBlockchain(form)
       ElMessage.success(form.id ? '编辑成功' : '添加成功')
       dialogVisible.value = false
@@ -265,6 +435,16 @@ const resetForm = () => {
     explorerUrl: '',
     addTime: ''
   })
+  
+  // 重置监控条件表单
+  conditionForm.triggerAmount = 0
+  conditionForm.maxPercentage = 110
+  conditionForm.triggerAction = 'transfer'
+  conditionForm.secondaryList = false
+  conditionForm.monitorStatus = true
+  
+  // 切换到基本信息标签
+  activeTab.value = 'basicInfo'
 }
 
 // 每页条数变化
@@ -311,10 +491,8 @@ onMounted(() => {
 }
 
 .search-label {
-  white-space: nowrap;
   margin-right: 8px;
-  font-size: 14px;
-  color: #606266;
+  white-space: nowrap;
 }
 
 .search-buttons {
@@ -324,7 +502,7 @@ onMounted(() => {
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
   justify-content: flex-end;
 }
@@ -334,9 +512,15 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
-/* 确保表单元素宽度一致 */
-.el-form-item .el-input,
-.el-form-item .el-select {
-  width: 100%;
+.monitor-condition-container {
+  padding: 10px;
+}
+
+.ellipsis-text {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
 }
 </style> 
