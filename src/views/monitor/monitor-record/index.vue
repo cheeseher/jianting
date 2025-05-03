@@ -34,7 +34,7 @@
           </div>
           
           <div class="search-item">
-            <span class="search-label">代币名称：</span>
+            <span class="search-label">币种：</span>
             <el-input v-model="queryParams.tokenName" placeholder="输入关键词" clearable style="width: 220px" />
           </div>
           
@@ -95,7 +95,7 @@
         </el-table-column>
         <el-table-column prop="type" label="类型" width="80" />
         <el-table-column prop="chain" label="公链" width="80" />
-        <el-table-column prop="tokenName" label="代币名称" width="100" />
+        <el-table-column prop="tokenName" label="币种" width="100" />
         <el-table-column prop="amount" label="转账数量" width="100">
           <template #default="{ row }">
             <span :class="row.amount.startsWith('+') ? 'amount-positive' : 'amount-negative'">{{ row.amount }}</span>
