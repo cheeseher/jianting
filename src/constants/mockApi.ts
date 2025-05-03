@@ -1,4 +1,5 @@
 import { MonitorAddress } from '@/types/monitor'
+import { TelegramBot } from '@/types/telegram'
 import { ElMessage } from 'element-plus'
 
 // 添加监听地址
@@ -93,6 +94,36 @@ export const updateCustomer = (data: any): Promise<boolean> => {
 
 // 删除客户
 export const deleteCustomer = (id: string): Promise<boolean> => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      ElMessage.success('删除成功')
+      resolve(true)
+    }, 500)
+  })
+}
+
+// 添加TG机器人设置
+export const addTelegramBot = (data: TelegramBot): Promise<boolean> => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      ElMessage.success('添加成功')
+      resolve(true)
+    }, 500)
+  })
+}
+
+// 更新TG机器人设置
+export const updateTelegramBot = (data: TelegramBot): Promise<boolean> => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      ElMessage.success('更新成功')
+      resolve(true)
+    }, 500)
+  })
+}
+
+// 删除TG机器人设置
+export const deleteTelegramBot = (id: string): Promise<boolean> => {
   return new Promise(resolve => {
     setTimeout(() => {
       ElMessage.success('删除成功')

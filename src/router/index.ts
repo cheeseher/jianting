@@ -94,6 +94,21 @@ const routes: Array<RouteRecordRaw> = [
         ]
       },
       {
+        path: 'telegram',
+        name: 'Telegram',
+        component: () => import('../views/telegram/index.vue'),
+        meta: { title: 'TG机器人', icon: 'ChatDotRound' },
+        redirect: '/telegram/bot',
+        children: [
+          {
+            path: 'bot',
+            name: 'TelegramBot',
+            component: () => import('../views/telegram/bot/index.vue'),
+            meta: { title: 'TG机器人设置' }
+          }
+        ]
+      },
+      {
         path: 'system',
         name: 'System',
         component: () => import('../views/system/index.vue'),

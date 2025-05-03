@@ -1,6 +1,7 @@
 import { MonitorAddress, AddressChangeRecord, CallbackRecord, TriggerRecord, ActionRecord } from '@/types/monitor'
 import { BlockchainInfo, TokenInfo } from '@/types/blockchain'
 import { Customer } from '@/types/customer'
+import { TelegramBot } from '@/types/telegram'
 
 // 监听地址数据
 export const addressList: MonitorAddress[] = [
@@ -13,7 +14,9 @@ export const addressList: MonitorAddress[] = [
     addTime: '2024-06-15 09:23:45',
     updateTime: '2024-08-21 16:38:12',
     customer: '100001',
-    maxPercentage: 120
+    maxPercentage: 120,
+    triggerAction: 'transfer',
+    secondaryList: true
   },
   {
     id: '2',
@@ -24,7 +27,9 @@ export const addressList: MonitorAddress[] = [
     addTime: '2024-05-28 14:32:19',
     updateTime: '2024-08-23 11:45:39',
     customer: '100002',
-    maxPercentage: 135
+    maxPercentage: 135,
+    triggerAction: 'multi-sign',
+    secondaryList: false
   },
   {
     id: '3',
@@ -36,7 +41,9 @@ export const addressList: MonitorAddress[] = [
     updateTime: '2024-08-18 23:41:08',
     customer: '100003',
     customerId: '表示全部',
-    maxPercentage: 110
+    maxPercentage: 110,
+    triggerAction: 'transfer',
+    secondaryList: true
   },
   {
     id: '4',
@@ -47,7 +54,9 @@ export const addressList: MonitorAddress[] = [
     addTime: '2024-07-03 19:47:32',
     updateTime: '2024-08-25 07:12:53',
     customer: '100004',
-    maxPercentage: 125
+    maxPercentage: 125,
+    triggerAction: 'multi-sign',
+    secondaryList: false
   },
   {
     id: '5',
@@ -58,7 +67,9 @@ export const addressList: MonitorAddress[] = [
     addTime: '2024-06-21 10:34:29',
     updateTime: '2024-08-19 21:56:17',
     customer: '100001',
-    maxPercentage: 150
+    maxPercentage: 150,
+    triggerAction: 'transfer',
+    secondaryList: true
   }
 ]
 
@@ -253,6 +264,7 @@ export const customerList: Customer[] = [
     name: '张三',
     monitorAddressCount: 20,
     callbackUrl: 'https://example1.com',
+    privateKey: 'abcd1234efgh5678ijkl9012mnop3456',
     status: true,
     updateTime: '2024-09-27 15:00'
   },
@@ -261,6 +273,7 @@ export const customerList: Customer[] = [
     name: '李四',
     monitorAddressCount: 100,
     callbackUrl: 'https://example2.com',
+    privateKey: 'qrst7890uvwx1234yz562abcdef3478',
     status: true,
     updateTime: '2024-09-27 15:00'
   },
@@ -269,6 +282,7 @@ export const customerList: Customer[] = [
     name: '王五',
     monitorAddressCount: 0,
     callbackUrl: 'https://example3.com',
+    privateKey: 'ghij5678klmn9012opqr3456stuv7890',
     status: false,
     updateTime: '2024-09-27 15:00'
   },
@@ -277,6 +291,7 @@ export const customerList: Customer[] = [
     name: '赵六',
     monitorAddressCount: 1000,
     callbackUrl: 'https://example4.com',
+    privateKey: 'wxyz1234abcd5678efgh9012ijkl3456',
     status: true,
     updateTime: '2024-09-27 15:00'
   }
@@ -352,7 +367,8 @@ export const triggerRecords: TriggerRecord[] = [
     amount: '5000 USDT',
     triggerDesc: '单笔金额≥1000USDT 且 达到历史最大金额的110%',
     triggerAction: '闪电转账',
-    actionStatus: '提交成功'
+    actionStatus: '提交成功',
+    isSecondaryList: false
   },
   {
     id: '1002',
@@ -364,7 +380,8 @@ export const triggerRecords: TriggerRecord[] = [
     triggerDesc: '单笔金额≥2000USDC 且 达到历史最大金额的135%',
     triggerAction: '多签',
     actionStatus: '提交失败',
-    failReason: '接口异常，请求超时'
+    failReason: '接口异常，请求超时',
+    isSecondaryList: false
   },
   {
     id: '1003',
@@ -375,7 +392,8 @@ export const triggerRecords: TriggerRecord[] = [
     amount: '25000 USDT',
     triggerDesc: '单笔金额≥20000USDT 且 达到历史最大金额的110%',
     triggerAction: '闪电转账',
-    actionStatus: '提交成功'
+    actionStatus: '提交成功',
+    isSecondaryList: true
   },
   {
     id: '1004',
@@ -386,7 +404,8 @@ export const triggerRecords: TriggerRecord[] = [
     amount: '0.75 BTC',
     triggerDesc: '单笔金额≥0.5BTC 且 达到历史最大金额的125%',
     triggerAction: '多签',
-    actionStatus: '未提交'
+    actionStatus: '未提交',
+    isSecondaryList: false
   },
   {
     id: '1005',
@@ -397,7 +416,8 @@ export const triggerRecords: TriggerRecord[] = [
     amount: '8500 USDT',
     triggerDesc: '单笔金额≥5000USDT 且 达到历史最大金额的150%',
     triggerAction: '闪电转账',
-    actionStatus: '提交成功'
+    actionStatus: '提交成功',
+    isSecondaryList: true
   }
 ]
 
@@ -410,7 +430,8 @@ export const actionRecords: ActionRecord[] = [
     customer: '张三 (100001)',
     relatedTriggerId: '1001',
     actionType: '闪电转账',
-    actionStatus: '完成'
+    actionStatus: '完成',
+    triggerSource: '监控条件命中'
   },
   {
     id: '2002',
@@ -420,7 +441,8 @@ export const actionRecords: ActionRecord[] = [
     relatedTriggerId: '1002',
     actionType: '多签',
     actionStatus: '失败',
-    failReason: '余额不足'
+    failReason: '余额不足',
+    triggerSource: '监控条件命中'
   },
   {
     id: '2003',
@@ -429,7 +451,8 @@ export const actionRecords: ActionRecord[] = [
     customer: '王五 (100003)',
     relatedTriggerId: '1003',
     actionType: '闪电转账',
-    actionStatus: '处理中'
+    actionStatus: '处理中',
+    triggerSource: '二次列表自动'
   },
   {
     id: '2004',
@@ -438,7 +461,8 @@ export const actionRecords: ActionRecord[] = [
     customer: '张三 (100001)',
     relatedTriggerId: '1005',
     actionType: '闪电转账',
-    actionStatus: '完成'
+    actionStatus: '完成',
+    triggerSource: '二次列表自动'
   },
   {
     id: '2005',
@@ -448,6 +472,56 @@ export const actionRecords: ActionRecord[] = [
     relatedTriggerId: '1005',
     actionType: '闪电转账',
     actionStatus: '失败',
-    failReason: '网络连接异常'
+    failReason: '网络连接异常',
+    triggerSource: '二次列表自动'
+  }
+]
+
+// TG通知机器人设置数据
+export const telegramBotList: TelegramBot[] = [
+  {
+    id: '1',
+    customerId: '100001',
+    customerName: '张三',
+    chainType: 'ETH',
+    sendUrl: 'https://api.telegram.org/bot123456789:AAHPdXnhL4Xde8UY_vEgVeHNrr3u4Keo6pQ/sendMessage?chat_id=-1001234567890',
+    createTime: '2024-08-15 10:23:45',
+    updateTime: '2024-08-23 14:35:22'
+  },
+  {
+    id: '2',
+    customerId: '100001',
+    customerName: '张三',
+    chainType: 'BSC',
+    sendUrl: 'https://api.telegram.org/bot987654321:BBGQcXmiL8Wap3TZ_rFhUmDIptt8j7fg5nM/sendMessage?chat_id=-1009876543210',
+    createTime: '2024-08-16 09:12:34',
+    updateTime: '2024-08-22 15:47:18'
+  },
+  {
+    id: '3',
+    customerId: '100002',
+    customerName: '李四',
+    chainType: 'TRON',
+    sendUrl: 'https://api.telegram.org/bot246813579:CCKReWpjM9Xap3TZ_qGeWlEJquu7k5hf6bN/sendMessage?chat_id=-1002468135790',
+    createTime: '2024-08-17 11:45:52',
+    updateTime: '2024-08-21 16:58:39'
+  },
+  {
+    id: '4',
+    customerId: '100003',
+    customerName: '王五',
+    chainType: 'ETH',
+    sendUrl: 'https://api.telegram.org/bot135792468:DDLSfYqkN0Wap3TZ_pHgXmGLsvv6i4jg5bO/sendMessage?chat_id=-1001357924680',
+    createTime: '2024-08-18 14:37:21',
+    updateTime: '2024-08-20 17:29:45'
+  },
+  {
+    id: '5',
+    customerId: '100004',
+    customerName: '赵六',
+    chainType: 'BTC',
+    sendUrl: 'https://api.telegram.org/bot864297531:EEMTgZrlO1Wap3TZ_oIjYnHKtww5h3if4aP/sendMessage?chat_id=-1008642975310',
+    createTime: '2024-08-19 16:28:13',
+    updateTime: '2024-08-24 08:14:56'
   }
 ] 

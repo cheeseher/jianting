@@ -85,7 +85,7 @@
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="客户ID" min-width="120" />
         <el-table-column prop="name" label="客户名称" min-width="120" />
-        <el-table-column label="监听地址数量" min-width="120">
+        <el-table-column prop="monitorAddressCount" label="监听地址数量" min-width="120">
           <template #default="{ row }">
             <el-button link type="primary" @click="openAddressDialog(row)">
               {{ row.monitorAddressCount }}
@@ -93,6 +93,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="callbackUrl" label="回调地址" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="privateKey" label="私钥" min-width="180" show-overflow-tooltip />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch
@@ -143,6 +144,10 @@
           
           <el-form-item label="回调地址" prop="callbackUrl" required>
             <el-input v-model="form.callbackUrl" placeholder="请输入回调地址" />
+          </el-form-item>
+          
+          <el-form-item label="私钥" prop="privateKey" required>
+            <el-input v-model="form.privateKey" placeholder="请输入私钥" />
           </el-form-item>
           
           <el-form-item label="状态" prop="status">
@@ -279,6 +284,7 @@ const form = reactive({
   id: '',
   name: '',
   callbackUrl: '',
+  privateKey: '',
   status: true
 })
 
@@ -295,6 +301,10 @@ const rules = {
       message: '回调地址必须以http://或https://开头', 
       trigger: 'blur' 
     }
+  ],
+  privateKey: [
+    { required: true, message: '请输入私钥', trigger: 'blur' },
+    { min: 16, message: '私钥长度不能小于16个字符', trigger: 'blur' }
   ]
 }
 
@@ -609,6 +619,7 @@ const submitForm = async () => {
         await addCustomer({
           name: form.name,
           callbackUrl: form.callbackUrl,
+          privateKey: form.privateKey,
           status: form.status,
           monitorAddressCount: 0
         })
@@ -618,6 +629,7 @@ const submitForm = async () => {
           id: form.id,
           name: form.name,
           callbackUrl: form.callbackUrl,
+          privateKey: form.privateKey,
           status: form.status,
           monitorAddressCount: 0,
           updateTime: ''
@@ -641,6 +653,7 @@ const resetForm = () => {
   form.id = ''
   form.name = ''
   form.callbackUrl = ''
+  form.privateKey = ''
   form.status = true
   
   if (formRef.value) {

@@ -38,6 +38,15 @@
             </el-select>
           </div>
           
+          <!-- 新增二次列表筛选 -->
+          <div class="search-item">
+            <span class="search-label">二次列表：</span>
+            <el-select v-model="queryParams.isSecondaryList" placeholder="全部" clearable style="width: 120px">
+              <el-option label="是" :value="true" />
+              <el-option label="否" :value="false" />
+            </el-select>
+          </div>
+          
           <div class="search-item">
             <span class="search-label">触发时间：</span>
             <el-date-picker
@@ -79,8 +88,22 @@
           </template>
         </el-table-column>
         <el-table-column prop="amount" label="交易金额" min-width="120" />
-        <el-table-column prop="triggerDesc" label="触发条件描述" min-width="200" />
+        <el-table-column label="触发条件描述" min-width="200">
+          <template #default="{ row }">
+            <span v-if="row.isSecondaryList">二次列表自动触发</span>
+            <span v-else>{{ row.triggerDesc }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="triggerAction" label="触发动作" min-width="100" />
+        
+        <!-- 新增二次列表列 -->
+        <el-table-column label="二次列表" min-width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.isSecondaryList" type="success">二次列表自动</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        
         <el-table-column prop="actionStatus" label="动作状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.actionStatus)">{{ row.actionStatus }}</el-tag>
@@ -135,6 +158,7 @@ const queryParams = reactive<TriggerRecordQueryParams>({
   customer: '',
   triggerAction: '',
   actionStatus: '',
+  isSecondaryList: undefined,
   pageNum: 1,
   pageSize: 10
 })
@@ -204,6 +228,10 @@ const getList = () => {
       
       if (queryParams.actionStatus) {
         filteredData = filteredData.filter(item => item.actionStatus === queryParams.actionStatus)
+      }
+      
+      if (queryParams.isSecondaryList) {
+        filteredData = filteredData.filter(item => item.isSecondaryList === queryParams.isSecondaryList)
       }
       
       // 时间范围过滤

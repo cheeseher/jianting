@@ -4,6 +4,7 @@ export interface Customer {
   name: string;        // 客户名称
   monitorAddressCount: number;  // 监听地址数量
   callbackUrl: string; // 回调地址
+  privateKey: string;  // 私钥
   status: boolean;     // 状态
   updateTime: string;  // 更新时间
 }

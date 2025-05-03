@@ -145,6 +145,14 @@
             {{ row.triggerAction ? formatTriggerAction(row.triggerAction) : '-' }}
           </template>
         </el-table-column>
+        <el-table-column label="二次列表" width="120">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.secondaryList"
+              @change="handleSecondaryListChange(row)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="添加时间" prop="addTime" width="180" />
         <el-table-column label="更新时间" prop="updateTime" width="180" />
         <el-table-column label="操作" width="180" fixed="right">
@@ -256,6 +264,13 @@
                     <el-option label="提交闪电转账" value="transfer" />
                     <el-option label="提交多签" value="multi-sign" />
                   </el-select>
+                </el-form-item>
+                <el-form-item label="二次列表" prop="secondaryList">
+                  <el-switch
+                    v-model="conditionForm.secondaryList"
+                    active-text="启用"
+                    inactive-text="禁用"
+                  />
                 </el-form-item>
                 <el-form-item label="状态" prop="status">
                   <el-switch
@@ -440,6 +455,7 @@ const conditionForm = reactive({
   triggerAmount: 0,
   maxPercentage: 110,
   triggerAction: 'transfer' as 'transfer' | 'multi-sign',
+  secondaryList: false,
   status: true
 })
 const conditionRules = reactive<FormRules>({
@@ -731,6 +747,7 @@ const handleEdit = (row: MonitorAddress) => {
   conditionForm.triggerAmount = row.triggerAmount || 0
   conditionForm.maxPercentage = row.maxPercentage || 110
   conditionForm.triggerAction = row.triggerAction || 'transfer'
+  conditionForm.secondaryList = row.secondaryList || false
   conditionForm.status = row.monitorStatus !== undefined ? row.monitorStatus : true
 }
 
@@ -809,7 +826,9 @@ const submitForm = async () => {
         tokenBalance: '',
         addTime: form.addTime || now,
         updateTime: now,
-        maxPercentage: 110 // 确保有默认值
+        maxPercentage: 110, // 确保有默认值
+        secondaryList: conditionForm.secondaryList,
+        monitorStatus: conditionForm.status
       }
       
       // 如果是编辑模式且当前在监控条件标签页，保存监控条件
@@ -825,6 +844,7 @@ const submitForm = async () => {
               triggerAmount: conditionForm.triggerAmount,
               maxPercentage: conditionForm.maxPercentage,
               triggerAction: conditionForm.triggerAction,
+              secondaryList: conditionForm.secondaryList,
               monitorStatus: conditionForm.status
             })
           } else {
@@ -864,6 +884,7 @@ const resetForm = () => {
   conditionForm.triggerAmount = 0
   conditionForm.maxPercentage = 110
   conditionForm.triggerAction = 'transfer'
+  conditionForm.secondaryList = false
   conditionForm.status = true
   
   // 切换到基本信息标签
@@ -997,6 +1018,103 @@ const formatTokenBalance = (tokenBalance: string | undefined, maxCount: number):
 const getTokenCount = (tokenBalance: string | undefined): number => {
   if (!tokenBalance) return 0
   return tokenBalance.split('\n').length
+}
+
+// 状态变更处理
+const handleStatusChange = (row: MonitorAddress, value: boolean) => {
+  if (value) {
+    confirmEnable(row)
+  } else {
+    confirmDisable(row)
+  }
+}
+
+// 二次列表状态变更处理
+const handleSecondaryListChange = (row: MonitorAddress) => {
+  // 根据状态显示不同的确认弹窗
+  if (row.secondaryList) {
+    // 开启二次列表确认
+    ElMessageBox.confirm(
+      '开启后，该地址命中过一次监控条件并触发闪电转账后，后续该地址收到的所有资产（包括主币和代币）将自动执行闪电转账，无需再次命中监控条件。\n\n仅已命中过监控条件并触发过闪电转账的地址才可加入二次列表，请确认当前地址已满足条件。',
+      '确认开启二次列表',
+      {
+        confirmButtonText: '确认开启',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    .then(() => {
+      ElMessage.success('已开启二次列表')
+      // 实际项目中应该调用API进行保存
+    })
+    .catch(() => {
+      // 用户取消，恢复状态
+      row.secondaryList = false
+    })
+  } else {
+    // 关闭二次列表确认
+    ElMessageBox.confirm(
+      '关闭后，该地址将不再自动执行闪电转账，恢复按正常监控条件判断是否触发动作。\n\n请确认是否要关闭，关闭后入账资金将不会自动转出。',
+      '确认关闭二次列表',
+      {
+        confirmButtonText: '确认关闭',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    .then(() => {
+      ElMessage.success('已关闭二次列表')
+      // 实际项目中应该调用API进行保存
+    })
+    .catch(() => {
+      // 用户取消，恢复状态
+      row.secondaryList = true
+    })
+  }
+}
+
+// 确认启用
+const confirmEnable = (row: MonitorAddress) => {
+  ElMessageBox.confirm(
+    `确定要启用该监听地址的监控状态吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(() => {
+      ElMessage.success('启用成功')
+    })
+    .catch(() => {
+      // 用户取消，恢复状态
+      if (row.monitorStatus !== undefined) {
+        row.monitorStatus = false
+      }
+    })
+}
+
+// 确认禁用
+const confirmDisable = (row: MonitorAddress) => {
+  ElMessageBox.confirm(
+    `确定要禁用该监听地址的监控状态吗？`,
+    '系统提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(() => {
+      ElMessage.success('禁用成功')
+    })
+    .catch(() => {
+      // 用户取消，恢复状态
+      if (row.monitorStatus !== undefined) {
+        row.monitorStatus = true
+      }
+    })
 }
 
 // 初始化

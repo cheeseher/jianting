@@ -38,6 +38,15 @@
             </el-select>
           </div>
           
+          <!-- 新增触发来源筛选 -->
+          <div class="search-item">
+            <span class="search-label">触发来源：</span>
+            <el-select v-model="queryParams.triggerSource" placeholder="全部" clearable style="width: 168px">
+              <el-option label="二次列表自动" value="二次列表自动" />
+              <el-option label="监控条件命中" value="监控条件命中" />
+            </el-select>
+          </div>
+          
           <div class="search-item">
             <span class="search-label">执行时间：</span>
             <el-date-picker
@@ -78,6 +87,18 @@
           </template>
         </el-table-column>
         <el-table-column prop="actionType" label="动作类型" min-width="100" />
+        
+        <!-- 新增触发来源列 -->
+        <el-table-column label="触发来源" min-width="120">
+          <template #default="{ row }">
+            <el-tag 
+              :type="row.triggerSource === '二次列表自动' ? 'success' : 'info'"
+            >
+              {{ row.triggerSource || '监控条件命中' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
         <el-table-column prop="actionStatus" label="动作状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.actionStatus)">{{ row.actionStatus }}</el-tag>
@@ -236,6 +257,11 @@ const getList = () => {
       filteredData = filteredData.filter(item => item.actionStatus === queryParams.actionStatus)
     }
     
+    // 添加按触发来源过滤
+    if (queryParams.triggerSource) {
+      filteredData = filteredData.filter(item => item.triggerSource === queryParams.triggerSource)
+    }
+    
     // 时间范围过滤
     if (queryParams.timeRange && queryParams.timeRange.length === 2) {
       const startDate = new Date(queryParams.timeRange[0]).getTime()
@@ -358,6 +384,7 @@ const handleDetail = (row: ActionRecord) => {
     <p><strong>关联异常记录ID：</strong>${row.relatedTriggerId}</p>
     <p><strong>动作类型：</strong>${row.actionType}</p>
     <p><strong>动作状态：</strong>${row.actionStatus}</p>
+    <p><strong>触发来源：</strong>${row.triggerSource || '监控条件命中'}</p>
     ${row.failReason ? `<p><strong>失败原因：</strong>${row.failReason}</p>` : ''}
     `,
     '动作执行详情',
@@ -368,57 +395,3 @@ const handleDetail = (row: ActionRecord) => {
   )
 }
 </script>
-
-<style scoped>
-.page-container {
-  padding: 20px;
-}
-
-.card-container {
-  margin-bottom: 20px;
-}
-
-.search-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.search-item {
-  display: flex;
-  align-items: center;
-}
-
-.search-label {
-  white-space: nowrap;
-  margin-right: 8px;
-}
-
-.search-buttons {
-  display: flex;
-  gap: 10px;
-  margin-left: auto;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.operation-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-}
-
-:deep(.operation-column) {
-  padding-left: 8px !important;
-}
-
-:deep(.operation-column .el-button) {
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-}
-</style> 

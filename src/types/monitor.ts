@@ -15,6 +15,7 @@ export interface MonitorAddress {
   triggerAmount?: number;     // 单笔触发金额
   maxPercentage: number;     // 历史最大单笔金额百分比
   triggerAction?: 'transfer' | 'multi-sign';  // 触发动作
+  secondaryList?: boolean;   // 二次列表
   monitorStatus?: boolean;    // 监控状态
 }
 
@@ -106,6 +107,7 @@ export interface TriggerRecord {
   triggerAction: string; // 触发动作（闪电转账/多签）
   actionStatus: string; // 动作状态（未提交/提交成功/提交失败）
   failReason?: string;  // 失败原因
+  isSecondaryList?: boolean; // 是否为二次列表自动触发
 }
 
 // 异常触发记录查询参数
@@ -114,6 +116,7 @@ export interface TriggerRecordQueryParams {
   customer?: string;      // 客户
   triggerAction?: string; // 触发动作
   actionStatus?: string;  // 动作状态
+  isSecondaryList?: boolean; // 是否为二次列表自动触发
   timeRange?: string[];   // 触发时间范围
   pageNum: number;        // 页码
   pageSize: number;       // 每页条数
@@ -129,6 +132,7 @@ export interface ActionRecord {
   actionType: string;   // 动作类型（闪电转账/多签）
   actionStatus: string; // 动作状态（提交成功/处理中/失败/完成）
   failReason?: string;  // 失败原因
+  triggerSource?: string; // 触发来源（二次列表自动/监控条件命中）
 }
 
 // 动作执行记录查询参数
@@ -137,6 +141,7 @@ export interface ActionRecordQueryParams {
   customer?: string;      // 客户
   actionType?: string;    // 动作类型
   actionStatus?: string;  // 动作状态
+  triggerSource?: string; // 触发来源
   timeRange?: string[];   // 执行时间范围
   pageNum: number;        // 页码
   pageSize: number;       // 每页条数
