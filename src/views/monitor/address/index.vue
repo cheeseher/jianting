@@ -611,7 +611,9 @@ const fetchAddressList = () => {
       return {
         ...item,
         ...monitorCondition,
-        customers
+        customers,
+        secondaryListMode: 'auto', // 设置所有地址为自动模式
+        isInSecondaryList: false // 设置为待触发状态
       }
     })
     
@@ -839,8 +841,8 @@ const submitForm = async () => {
         addTime: form.addTime || now,
         updateTime: now,
         maxPercentage: 110, // 确保有默认值
-        secondaryListMode: conditionForm.secondaryListMode,
-        isInSecondaryList: conditionForm.isInSecondaryList,
+        secondaryListMode: dialogType.value === 'add' ? 'auto' : conditionForm.secondaryListMode, // 新增地址时默认为自动模式
+        isInSecondaryList: false, // 新增地址时默认为未进入状态
         monitorStatus: conditionForm.status
       }
       
@@ -898,7 +900,7 @@ const resetForm = () => {
   conditionForm.triggerAmount = 0
   conditionForm.maxPercentage = 110
   conditionForm.triggerAction = 'transfer'
-  conditionForm.secondaryListMode = ''
+  conditionForm.secondaryListMode = dialogType.value === 'add' ? 'auto' : ''
   conditionForm.isInSecondaryList = false
   conditionForm.status = true
   

@@ -99,10 +99,8 @@
         <!-- 新增二次列表列 -->
         <el-table-column label="二次列表" min-width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.isSecondaryList" :type="row.secondaryListMode === 'manual' ? 'danger' : 'success'">
-              {{ row.secondaryListMode === 'manual' ? '手动触发' : '自动触发' }}
-            </el-tag>
-            <span v-else>-</span>
+            <el-tag v-if="row.isSecondaryList" type="success">是</el-tag>
+            <el-tag v-else type="info">否</el-tag>
           </template>
         </el-table-column>
         

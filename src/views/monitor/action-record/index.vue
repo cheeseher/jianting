@@ -42,7 +42,7 @@
           <div class="search-item">
             <span class="search-label">触发来源：</span>
             <el-select v-model="queryParams.triggerSource" placeholder="全部" clearable style="width: 168px">
-              <el-option label="二次列表自动" value="二次列表自动" />
+              <el-option label="二次列表" value="二次列表" />
               <el-option label="监控条件命中" value="监控条件命中" />
             </el-select>
           </div>
@@ -92,7 +92,7 @@
         <el-table-column label="触发来源" min-width="120">
           <template #default="{ row }">
             <el-tag 
-              :type="row.triggerSource === '二次列表自动' ? 'success' : 'info'"
+              :type="row.triggerSource === '二次列表' ? 'success' : 'info'"
             >
               {{ row.triggerSource || '监控条件命中' }}
             </el-tag>
