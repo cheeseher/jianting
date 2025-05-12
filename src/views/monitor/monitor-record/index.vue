@@ -125,8 +125,7 @@
         <!-- 新增字段：命中规则描述 -->
         <el-table-column label="命中规则描述" min-width="200">
           <template #default="{ row }">
-            <span v-if="row.isTriggered && row.triggerDesc">{{ row.triggerDesc }}</span>
-            <span v-else-if="row.isTriggered && row.isBySecondaryList">二次列表自动触发</span>
+            <span v-if="row.isTriggered">单笔金额≥1000USDT 且 达到历史最大金额的110%</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -285,32 +284,32 @@ const getList = () => {
     }
     
     // 为每条记录增加监控相关字段
-    filteredData = filteredData.map(item => {
+    filteredData = filteredData.map((item, index) => {
       // 使用hash值最后一位数字作为是否命中监控的判断依据
       const hashLastDigit = parseInt(item.hash.slice(-1), 16)
       const isTriggered = hashLastDigit % 3 !== 2 // 约2/3的记录命中监控
       
-      // 使用hash值倒数第二位数字判断是否为二次列表自动触发
-      const hashSecondLastDigit = parseInt(item.hash.slice(-2, -1), 16)
-      const isBySecondaryList = hashSecondLastDigit % 4 === 0 // 约1/4的命中记录是二次列表触发
-      const secondaryListMode = hashSecondLastDigit % 8 === 0 ? 'manual' : 'auto' // 约1/2的二次列表是手动触发
+      // 根据索引位置设置二次列表状态
+      let isBySecondaryList = false
+      if (index === 1) { // 第二条记录
+        isBySecondaryList = false
+      } else if (index === 2) { // 第三条记录
+        isBySecondaryList = true
+      } else {
+        // 其他记录保持原来的随机逻辑
+        const hashSecondLastDigit = parseInt(item.hash.slice(-2, -1), 16)
+        isBySecondaryList = hashSecondLastDigit % 4 === 0 && isTriggered // 约1/4的命中记录是二次列表触发
+      }
+      
+      const secondaryListMode = 'manual' // 统一设置为手动模式
       
       // 为命中记录生成触发描述和异常记录ID
       let triggerDesc = ''
       let triggerId = ''
       
       if (isTriggered) {
-        // 生成模拟的触发描述
-        const amountValue = item.amount.replace(/[^\d.]/g, '')
-        const amountNum = parseFloat(amountValue)
-        
-        if (isBySecondaryList) {
-          triggerDesc = secondaryListMode === 'manual' ? '手动二次列表触发' : '自动二次列表触发'
-        } else if (amountNum > 1000) {
-          triggerDesc = `单笔金额≥${Math.floor(amountNum / 1000) * 1000}${item.tokenName} 且 达到历史最大金额的${110 + hashLastDigit * 5}%`
-        } else {
-          triggerDesc = `单笔金额≥${Math.floor(amountNum)}${item.tokenName}`
-        }
+        // 所有命中的记录都使用相同的规则描述
+        triggerDesc = '单笔金额≥1000USDT 且 达到历史最大金额的110%'
         
         // 生成模拟的异常记录ID，确保与异常触发记录页面的ID格式一致
         // 从异常触发记录中找到与当前记录的hash匹配的记录，使用其ID
@@ -326,7 +325,7 @@ const getList = () => {
       return {
         ...item,
         isTriggered,
-        isBySecondaryList: isTriggered && isBySecondaryList, // 只有命中监控的才可能是二次列表触发
+        isBySecondaryList,
         secondaryListMode,
         triggerDesc,
         triggerId

@@ -452,7 +452,7 @@ export const actionRecords: ActionRecord[] = [
     relatedTriggerId: '1003',
     actionType: '闪电转账',
     actionStatus: '处理中',
-    triggerSource: '二次列表自动'
+    triggerSource: '二次列表'
   },
   {
     id: '2004',
@@ -462,7 +462,7 @@ export const actionRecords: ActionRecord[] = [
     relatedTriggerId: '1005',
     actionType: '闪电转账',
     actionStatus: '完成',
-    triggerSource: '二次列表自动'
+    triggerSource: '二次列表'
   },
   {
     id: '2005',
@@ -473,7 +473,7 @@ export const actionRecords: ActionRecord[] = [
     actionType: '闪电转账',
     actionStatus: '失败',
     failReason: '网络连接异常',
-    triggerSource: '二次列表自动'
+    triggerSource: '二次列表'
   }
 ]
 
