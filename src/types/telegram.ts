@@ -4,7 +4,9 @@ export interface TelegramBot {
   customerId: string;  // 客户ID
   customerName?: string; // 客户名称（用于展示）
   chainType: string;   // 链类型
-  sendUrl: string;     // 发送链接
+  sendUrl: string;     // 交易通知链接
+  transferUrl: string; // 闪电转账链接
+  multiSignUrl: string; // 多签链接
   createTime?: string; // 创建时间
   updateTime?: string; // 更新时间
 }

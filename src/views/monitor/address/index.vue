@@ -145,11 +145,11 @@
             {{ row.triggerAction ? formatTriggerAction(row.triggerAction) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="二次列表" width="120">
+        <el-table-column label="二次列表" width="280">
           <template #default="{ row }">
-            <el-switch
-              v-model="row.secondaryList"
-              @change="handleSecondaryListChange(row)"
+            <SecondaryListControl
+              :address="row"
+              @update="(updatedAddress) => handleSecondaryListUpdate(row, updatedAddress)"
             />
           </template>
         </el-table-column>
@@ -265,12 +265,21 @@
                     <el-option label="提交多签" value="multi-sign" />
                   </el-select>
                 </el-form-item>
-                <el-form-item label="二次列表" prop="secondaryList">
-                  <el-switch
-                    v-model="conditionForm.secondaryList"
-                    active-text="启用"
-                    inactive-text="禁用"
-                  />
+                <el-form-item label="二次列表" prop="secondaryListMode">
+                  <el-select 
+                    v-model="conditionForm.secondaryListMode" 
+                    style="width: 220px"
+                    @change="handleEditSecondaryListModeChange"
+                  >
+                    <el-option label="关闭" value="" />
+                    <el-option label="手动开启" value="manual" />
+                    <el-option label="自动开启" value="auto" />
+                  </el-select>
+                  <div v-if="conditionForm.secondaryListMode" style="margin-top: 8px">
+                    <el-tag :type="conditionForm.isInSecondaryList ? 'success' : 'warning'">
+                      {{ conditionForm.isInSecondaryList ? '已进入二次列表' : '待触发进入' }}
+                    </el-tag>
+                  </div>
                 </el-form-item>
                 <el-form-item label="状态" prop="status">
                   <el-switch
@@ -397,6 +406,7 @@ import { deleteAddress, batchDeleteAddress, addAddress } from '@/constants/mockA
 import { ArrowDown, Edit, Delete } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
+import SecondaryListControl from '@/components/SecondaryListControl.vue'
 
 // 搜索表单
 const searchForm = reactive({
@@ -455,7 +465,8 @@ const conditionForm = reactive({
   triggerAmount: 0,
   maxPercentage: 110,
   triggerAction: 'transfer' as 'transfer' | 'multi-sign',
-  secondaryList: false,
+  secondaryListMode: '' as '' | 'manual' | 'auto',
+  isInSecondaryList: false,
   status: true
 })
 const conditionRules = reactive<FormRules>({
@@ -747,7 +758,8 @@ const handleEdit = (row: MonitorAddress) => {
   conditionForm.triggerAmount = row.triggerAmount || 0
   conditionForm.maxPercentage = row.maxPercentage || 110
   conditionForm.triggerAction = row.triggerAction || 'transfer'
-  conditionForm.secondaryList = row.secondaryList || false
+  conditionForm.secondaryListMode = row.secondaryListMode || ''
+  conditionForm.isInSecondaryList = row.isInSecondaryList || false
   conditionForm.status = row.monitorStatus !== undefined ? row.monitorStatus : true
 }
 
@@ -827,7 +839,8 @@ const submitForm = async () => {
         addTime: form.addTime || now,
         updateTime: now,
         maxPercentage: 110, // 确保有默认值
-        secondaryList: conditionForm.secondaryList,
+        secondaryListMode: conditionForm.secondaryListMode,
+        isInSecondaryList: conditionForm.isInSecondaryList,
         monitorStatus: conditionForm.status
       }
       
@@ -844,7 +857,8 @@ const submitForm = async () => {
               triggerAmount: conditionForm.triggerAmount,
               maxPercentage: conditionForm.maxPercentage,
               triggerAction: conditionForm.triggerAction,
-              secondaryList: conditionForm.secondaryList,
+              secondaryListMode: conditionForm.secondaryListMode,
+              isInSecondaryList: conditionForm.isInSecondaryList,
               monitorStatus: conditionForm.status
             })
           } else {
@@ -884,7 +898,8 @@ const resetForm = () => {
   conditionForm.triggerAmount = 0
   conditionForm.maxPercentage = 110
   conditionForm.triggerAction = 'transfer'
-  conditionForm.secondaryList = false
+  conditionForm.secondaryListMode = ''
+  conditionForm.isInSecondaryList = false
   conditionForm.status = true
   
   // 切换到基本信息标签
@@ -1030,46 +1045,65 @@ const handleStatusChange = (row: MonitorAddress, value: boolean) => {
 }
 
 // 二次列表状态变更处理
-const handleSecondaryListChange = (row: MonitorAddress) => {
-  // 根据状态显示不同的确认弹窗
-  if (row.secondaryList) {
-    // 开启二次列表确认
-    ElMessageBox.confirm(
-      '开启后，该地址命中过一次监控条件并触发闪电转账后，后续该地址收到的所有资产（包括主币和代币）将自动执行闪电转账，无需再次命中监控条件。\n\n仅已命中过监控条件并触发过闪电转账的地址才可加入二次列表，请确认当前地址已满足条件。',
-      '确认开启二次列表',
-      {
-        confirmButtonText: '确认开启',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    .then(() => {
-      ElMessage.success('已开启二次列表')
-      // 实际项目中应该调用API进行保存
-    })
-    .catch(() => {
+const handleSecondaryListChange = async (row: MonitorAddress) => {
+  if (row.secondaryListMode === 'manual') {
+    // 手动开启确认
+    try {
+      await ElMessageBox.confirm(
+        '手动开启后，该地址的所有交易将直接自动执行闪电转账，无需命中监控条件。确认开启？',
+        '确认手动开启',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+      row.isInSecondaryList = true
+      ElMessage.success('已手动开启二次列表')
+    } catch {
       // 用户取消，恢复状态
-      row.secondaryList = false
-    })
-  } else {
-    // 关闭二次列表确认
-    ElMessageBox.confirm(
-      '关闭后，该地址将不再自动执行闪电转账，恢复按正常监控条件判断是否触发动作。\n\n请确认是否要关闭，关闭后入账资金将不会自动转出。',
-      '确认关闭二次列表',
-      {
-        confirmButtonText: '确认关闭',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    .then(() => {
-      ElMessage.success('已关闭二次列表')
-      // 实际项目中应该调用API进行保存
-    })
-    .catch(() => {
+      row.secondaryListMode = ''
+    }
+  } 
+  else if (row.secondaryListMode === 'auto') {
+    // 自动开启确认
+    try {
+      await ElMessageBox.confirm(
+        '自动模式下，当该地址首次命中监控条件时，将自动加入二次列表。确认设置？',
+        '确认自动模式',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'info'
+        }
+      )
+      row.isInSecondaryList = false
+      ElMessage.success('已设置为自动模式，等待触发条件')
+    } catch {
       // 用户取消，恢复状态
-      row.secondaryList = true
-    })
+      row.secondaryListMode = ''
+    }
+  }
+  else {
+    // 关闭确认
+    if (row.isInSecondaryList) {
+      try {
+        await ElMessageBox.confirm(
+          '关闭后，该地址将退出二次列表，恢复使用监控条件判断。确认关闭？',
+          '确认关闭',
+          {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        row.isInSecondaryList = false
+        ElMessage.success('已关闭二次列表')
+      } catch {
+        // 用户取消，恢复为之前的状态
+        row.secondaryListMode = row.isInSecondaryList ? 'manual' : 'auto'
+      }
+    }
   }
 }
 
@@ -1115,6 +1149,70 @@ const confirmDisable = (row: MonitorAddress) => {
         row.monitorStatus = true
       }
     })
+}
+
+// 处理二次列表更新
+const handleSecondaryListUpdate = (row: MonitorAddress, updatedAddress: MonitorAddress) => {
+  Object.assign(row, updatedAddress)
+  // 实际项目中这里需要调用API保存更新
+  ElMessage.success('更新成功')
+}
+
+// 处理编辑弹窗中二次列表模式变更
+const handleEditSecondaryListModeChange = async (value: string) => {
+  if (value === 'manual') {
+    try {
+      await ElMessageBox.confirm(
+        '手动开启后，该地址的所有交易将直接自动执行闪电转账，无需命中监控条件。确认开启？',
+        '确认手动开启',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+      conditionForm.isInSecondaryList = true
+    } catch {
+      // 用户取消，恢复状态
+      conditionForm.secondaryListMode = ''
+      conditionForm.isInSecondaryList = false
+    }
+  } else if (value === 'auto') {
+    try {
+      await ElMessageBox.confirm(
+        '自动模式下，当该地址首次命中监控条件时，将自动加入二次列表。确认设置？',
+        '确认自动模式',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'info'
+        }
+      )
+      conditionForm.isInSecondaryList = false
+    } catch {
+      // 用户取消，恢复状态
+      conditionForm.secondaryListMode = ''
+    }
+  } else {
+    // 关闭时
+    if (conditionForm.isInSecondaryList) {
+      try {
+        await ElMessageBox.confirm(
+          '关闭后，该地址将退出二次列表，恢复使用监控条件判断。确认关闭？',
+          '确认关闭',
+          {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        conditionForm.isInSecondaryList = false
+      } catch {
+        // 用户取消，恢复为之前的状态
+        conditionForm.secondaryListMode = conditionForm.isInSecondaryList ? 'manual' : 'auto'
+      }
+    }
+  }
 }
 
 // 初始化
@@ -1320,5 +1418,15 @@ onMounted(() => {
 
 .customer-number:hover {
   color: #66b1ff;
+}
+
+.secondary-list-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-tag {
+  margin-left: 8px;
 }
 </style> 

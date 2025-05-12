@@ -48,6 +48,15 @@
             <el-input v-model="queryParams.targetAddress" placeholder="输入关键词" clearable style="width: 220px" />
           </div>
           
+          <!-- 添加二次列表筛选 -->
+          <div class="search-item">
+            <span class="search-label">二次列表：</span>
+            <el-select v-model="queryParams.isBySecondaryList" placeholder="全部" clearable style="width: 120px">
+              <el-option label="是" :value="true" />
+              <el-option label="否" :value="false" />
+            </el-select>
+          </div>
+          
           <div class="search-item">
             <span class="search-label">交易时间：</span>
             <el-date-picker
@@ -140,8 +149,8 @@
         <!-- 新增字段：是否二次列表自动触发 -->
         <el-table-column label="二次列表" width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.isBySecondaryList" type="success" size="small">自动触发</el-tag>
-            <span v-else>-</span>
+            <el-tag v-if="row.isBySecondaryList" type="success">是</el-tag>
+            <el-tag v-else type="info">否</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -179,6 +188,7 @@ const queryParams = reactive({
   chain: '',
   tokenName: '',
   customer: '',
+  isBySecondaryList: undefined as boolean | undefined,
   pageNum: 1,
   pageSize: 10,
   timeRange: [] as string[]
@@ -213,6 +223,7 @@ interface EnhancedCallbackRecord extends CallbackRecord {
   triggerDesc?: string;
   triggerId?: string;
   isBySecondaryList?: boolean;
+  secondaryListMode?: 'auto' | 'manual';
 }
 
 // 获取监听记录列表
@@ -253,6 +264,16 @@ const getList = () => {
         item.targetAddress && item.targetAddress.includes(queryParams.targetAddress))
     }
     
+    // 添加二次列表筛选
+    if (queryParams.isBySecondaryList !== undefined) {
+      filteredData = filteredData.filter(item => {
+        // 使用hash值倒数第二位数字判断是否为二次列表自动触发
+        const hashSecondLastDigit = parseInt(item.hash.slice(-2, -1), 16)
+        const isBySecondaryList = hashSecondLastDigit % 4 === 0 // 约1/4的命中记录是二次列表触发
+        return isBySecondaryList === queryParams.isBySecondaryList
+      })
+    }
+    
     if (queryParams.timeRange && queryParams.timeRange.length === 2) {
       const startTime = new Date(queryParams.timeRange[0]).getTime()
       const endTime = new Date(queryParams.timeRange[1]).getTime()
@@ -272,6 +293,7 @@ const getList = () => {
       // 使用hash值倒数第二位数字判断是否为二次列表自动触发
       const hashSecondLastDigit = parseInt(item.hash.slice(-2, -1), 16)
       const isBySecondaryList = hashSecondLastDigit % 4 === 0 // 约1/4的命中记录是二次列表触发
+      const secondaryListMode = hashSecondLastDigit % 8 === 0 ? 'manual' : 'auto' // 约1/2的二次列表是手动触发
       
       // 为命中记录生成触发描述和异常记录ID
       let triggerDesc = ''
@@ -283,7 +305,7 @@ const getList = () => {
         const amountNum = parseFloat(amountValue)
         
         if (isBySecondaryList) {
-          triggerDesc = '二次列表自动触发'
+          triggerDesc = secondaryListMode === 'manual' ? '手动二次列表触发' : '自动二次列表触发'
         } else if (amountNum > 1000) {
           triggerDesc = `单笔金额≥${Math.floor(amountNum / 1000) * 1000}${item.tokenName} 且 达到历史最大金额的${110 + hashLastDigit * 5}%`
         } else {
@@ -305,6 +327,7 @@ const getList = () => {
         ...item,
         isTriggered,
         isBySecondaryList: isTriggered && isBySecondaryList, // 只有命中监控的才可能是二次列表触发
+        secondaryListMode,
         triggerDesc,
         triggerId
       }

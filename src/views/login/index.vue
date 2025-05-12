@@ -1,38 +1,39 @@
 <template>
   <div class="login-container">
-    <div class="login-form-container">
-      <div class="login-title">区块链监听管理后台</div>
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        class="login-form"
-      >
-        <el-form-item prop="username">
+    <div class="login-box">
+      <div class="title">区块链监听管理后台</div>
+      <el-form class="login-form" :model="loginForm">
+        <el-form-item>
           <el-input
-            v-model="form.username"
-            placeholder="请输入用户名"
+            v-model="loginForm.username"
+            placeholder="用户名"
+            :readonly="true"
             prefix-icon="User"
           />
         </el-form-item>
-        
-        <el-form-item prop="password">
+        <el-form-item>
           <el-input
-            v-model="form.password"
+            v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码"
+            placeholder="密码"
+            :readonly="true"
             prefix-icon="Lock"
-            show-password
           />
         </el-form-item>
-        
         <el-form-item>
-          <el-button
-            type="primary"
-            class="login-button"
-            :loading="loading"
-            @click="handleLogin"
-          >
+          <div class="verify-code-container">
+            <el-input
+              v-model="loginForm.verifyCode"
+              placeholder="请输入验证码"
+              class="verify-code-input"
+            />
+            <div class="verify-code" @click="refreshVerifyCode">
+              {{ verifyCode }}
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" class="login-button" @click="handleLogin">
             登录
           </el-button>
         </el-form-item>
@@ -42,49 +43,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, FormInstance } from 'element-plus'
+import { User, Lock } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const formRef = ref<FormInstance>()
-const loading = ref(false)
 
-const form = reactive({
+const loginForm = reactive({
   username: 'admin',
-  password: '123456'
+  password: '******',
+  verifyCode: ''
 })
 
-const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
+// 生成随机验证码
+const generateVerifyCode = () => {
+  const characters = '0123456789'
+  let code = ''
+  for (let i = 0; i < 4; i++) {
+    code += characters[Math.floor(Math.random() * characters.length)]
+  }
+  return code
 }
 
-const handleLogin = async () => {
-  if (!formRef.value) return
+const verifyCode = ref(generateVerifyCode())
+
+// 刷新验证码
+const refreshVerifyCode = () => {
+  verifyCode.value = generateVerifyCode()
+  loginForm.verifyCode = ''
+}
+
+const handleLogin = () => {
+  if (!loginForm.verifyCode) {
+    ElMessage.error('请输入验证码')
+    return
+  }
   
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        // 模拟登录请求
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        localStorage.setItem('token', 'demo-token')
-        ElMessage.success('登录成功')
-        router.push('/')
-      } catch (error) {
-        console.error('登录失败', error)
-        ElMessage.error('登录失败')
-      } finally {
-        loading.value = false
-      }
-    }
-  })
+  if (loginForm.verifyCode !== verifyCode.value) {
+    ElMessage.error('验证码错误')
+    refreshVerifyCode()
+    return
+  }
+
+  localStorage.setItem('token', 'demo-token')
+  router.push('/')
 }
 </script>
 
@@ -95,30 +98,56 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f5f7f9;
+  background: #001529;
 }
 
-.login-form-container {
+.login-box {
   width: 400px;
   padding: 40px;
-  background-color: #fff;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.login-title {
+.title {
   text-align: center;
   font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 30px;
   color: #303133;
+  margin-bottom: 40px;
 }
 
 .login-form {
-  width: 100%;
+  margin-top: 20px;
 }
 
 .login-button {
   width: 100%;
+}
+
+.verify-code-container {
+  display: flex;
+  gap: 12px;
+}
+
+.verify-code-input {
+  flex: 1;
+}
+
+.verify-code {
+  width: 100px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  background: #f0f2f5;
+  color: #606266;
+  font-size: 18px;
+  font-family: Arial;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+}
+
+.verify-code:hover {
+  background: #e6e8eb;
 }
 </style> 

@@ -5,10 +5,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
+    "dev:force": "vite --force --host",
     "build": "vite build",
     "build-with-types": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean:cache": "rm -rf node_modules/.vite"
   },
   "keywords": [],
   "author": "",

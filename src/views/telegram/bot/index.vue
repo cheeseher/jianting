@@ -57,10 +57,24 @@
         <el-table-column label="ID" prop="id" width="80" />
         <el-table-column label="客户ID" prop="customerId" width="120" />
         <el-table-column label="链类型" prop="chainType" width="100" />
-        <el-table-column label="发送链接" prop="sendUrl" min-width="300">
+        <el-table-column label="交易通知" prop="sendUrl" min-width="300">
           <template #default="{ row }">
             <el-tooltip :content="row.sendUrl" placement="top" :show-after="200">
               <span class="ellipsis-text">{{ row.sendUrl }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="闪电转账" prop="transferUrl" min-width="300">
+          <template #default="{ row }">
+            <el-tooltip :content="row.transferUrl" placement="top" :show-after="200">
+              <span class="ellipsis-text">{{ row.transferUrl || '-' }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="多签" prop="multiSignUrl" min-width="300">
+          <template #default="{ row }">
+            <el-tooltip :content="row.multiSignUrl" placement="top" :show-after="200">
+              <span class="ellipsis-text">{{ row.multiSignUrl || '-' }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -135,10 +149,28 @@
             </el-select>
           </el-form-item>
           
-          <el-form-item label="发送链接" prop="sendUrl" required>
+          <el-form-item label="交易通知" prop="sendUrl" required>
             <el-input
               v-model="form.sendUrl"
-              placeholder="请输入TG Bot发送链接"
+              placeholder="请输入TG Bot交易通知链接"
+              clearable
+            />
+            <div class="form-item-tip">格式：https://api.telegram.org/开头</div>
+          </el-form-item>
+          
+          <el-form-item label="闪电转账" prop="transferUrl" required>
+            <el-input
+              v-model="form.transferUrl"
+              placeholder="请输入TG Bot闪电转账链接"
+              clearable
+            />
+            <div class="form-item-tip">格式：https://api.telegram.org/开头</div>
+          </el-form-item>
+          
+          <el-form-item label="多签" prop="multiSignUrl" required>
+            <el-input
+              v-model="form.multiSignUrl"
+              placeholder="请输入TG Bot多签链接"
               clearable
             />
             <div class="form-item-tip">格式：https://api.telegram.org/开头</div>
@@ -199,7 +231,9 @@ const form = reactive<TelegramBot>({
   id: '',
   customerId: '',
   chainType: '',
-  sendUrl: ''
+  sendUrl: '',
+  transferUrl: '',
+  multiSignUrl: ''
 })
 
 // 表单校验规则
@@ -207,7 +241,23 @@ const rules = reactive<FormRules>({
   customerId: [{ required: true, message: '请选择客户', trigger: 'change' }],
   chainType: [{ required: true, message: '请选择链类型', trigger: 'change' }],
   sendUrl: [
-    { required: true, message: '请输入发送链接', trigger: 'blur' },
+    { required: true, message: '请输入交易通知链接', trigger: 'blur' },
+    { 
+      pattern: /^https:\/\/api\.telegram\.org\/.+/,
+      message: '链接格式必须以https://api.telegram.org/开头',
+      trigger: 'blur'
+    }
+  ],
+  transferUrl: [
+    { required: true, message: '请输入闪电转账链接', trigger: 'blur' },
+    { 
+      pattern: /^https:\/\/api\.telegram\.org\/.+/,
+      message: '链接格式必须以https://api.telegram.org/开头',
+      trigger: 'blur'
+    }
+  ],
+  multiSignUrl: [
+    { required: true, message: '请输入多签链接', trigger: 'blur' },
     { 
       pattern: /^https:\/\/api\.telegram\.org\/.+/,
       message: '链接格式必须以https://api.telegram.org/开头',
@@ -306,7 +356,9 @@ const resetForm = () => {
     id: '',
     customerId: '',
     chainType: '',
-    sendUrl: ''
+    sendUrl: '',
+    transferUrl: '',
+    multiSignUrl: ''
   })
 }
 

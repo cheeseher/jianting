@@ -485,6 +485,8 @@ export const telegramBotList: TelegramBot[] = [
     customerName: '张三',
     chainType: 'ETH',
     sendUrl: 'https://api.telegram.org/bot123456789:AAHPdXnhL4Xde8UY_vEgVeHNrr3u4Keo6pQ/sendMessage?chat_id=-1001234567890',
+    transferUrl: 'https://api.telegram.org/bot123456789:AAHPdXnhL4Xde8UY_vEgVeHNrr3u4Keo6pQ/sendMessage?chat_id=-1001234567891',
+    multiSignUrl: 'https://api.telegram.org/bot123456789:AAHPdXnhL4Xde8UY_vEgVeHNrr3u4Keo6pQ/sendMessage?chat_id=-1001234567892',
     createTime: '2024-08-15 10:23:45',
     updateTime: '2024-08-23 14:35:22'
   },
@@ -494,6 +496,8 @@ export const telegramBotList: TelegramBot[] = [
     customerName: '张三',
     chainType: 'BSC',
     sendUrl: 'https://api.telegram.org/bot987654321:BBGQcXmiL8Wap3TZ_rFhUmDIptt8j7fg5nM/sendMessage?chat_id=-1009876543210',
+    transferUrl: 'https://api.telegram.org/bot987654321:BBGQcXmiL8Wap3TZ_rFhUmDIptt8j7fg5nM/sendMessage?chat_id=-1009876543211',
+    multiSignUrl: 'https://api.telegram.org/bot987654321:BBGQcXmiL8Wap3TZ_rFhUmDIptt8j7fg5nM/sendMessage?chat_id=-1009876543212',
     createTime: '2024-08-16 09:12:34',
     updateTime: '2024-08-22 15:47:18'
   },
@@ -503,6 +507,8 @@ export const telegramBotList: TelegramBot[] = [
     customerName: '李四',
     chainType: 'TRON',
     sendUrl: 'https://api.telegram.org/bot246813579:CCKReWpjM9Xap3TZ_qGeWlEJquu7k5hf6bN/sendMessage?chat_id=-1002468135790',
+    transferUrl: 'https://api.telegram.org/bot246813579:CCKReWpjM9Xap3TZ_qGeWlEJquu7k5hf6bN/sendMessage?chat_id=-1002468135791',
+    multiSignUrl: 'https://api.telegram.org/bot246813579:CCKReWpjM9Xap3TZ_qGeWlEJquu7k5hf6bN/sendMessage?chat_id=-1002468135792',
     createTime: '2024-08-17 11:45:52',
     updateTime: '2024-08-21 16:58:39'
   },
@@ -512,6 +518,8 @@ export const telegramBotList: TelegramBot[] = [
     customerName: '王五',
     chainType: 'ETH',
     sendUrl: 'https://api.telegram.org/bot135792468:DDLSfYqkN0Wap3TZ_pHgXmGLsvv6i4jg5bO/sendMessage?chat_id=-1001357924680',
+    transferUrl: 'https://api.telegram.org/bot135792468:DDLSfYqkN0Wap3TZ_pHgXmGLsvv6i4jg5bO/sendMessage?chat_id=-1001357924681',
+    multiSignUrl: 'https://api.telegram.org/bot135792468:DDLSfYqkN0Wap3TZ_pHgXmGLsvv6i4jg5bO/sendMessage?chat_id=-1001357924682',
     createTime: '2024-08-18 14:37:21',
     updateTime: '2024-08-20 17:29:45'
   },
@@ -521,6 +529,8 @@ export const telegramBotList: TelegramBot[] = [
     customerName: '赵六',
     chainType: 'BTC',
     sendUrl: 'https://api.telegram.org/bot864297531:EEMTgZrlO1Wap3TZ_oIjYnHKtww5h3if4aP/sendMessage?chat_id=-1008642975310',
+    transferUrl: 'https://api.telegram.org/bot864297531:EEMTgZrlO1Wap3TZ_oIjYnHKtww5h3if4aP/sendMessage?chat_id=-1008642975311',
+    multiSignUrl: 'https://api.telegram.org/bot864297531:EEMTgZrlO1Wap3TZ_oIjYnHKtww5h3if4aP/sendMessage?chat_id=-1008642975312',
     createTime: '2024-08-19 16:28:13',
     updateTime: '2024-08-24 08:14:56'
   }

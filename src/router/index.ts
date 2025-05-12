@@ -4,7 +4,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     component: () => import('../layout/index.vue'),
-    redirect: '/dashboard',
+    redirect: '/monitor/address',
     children: [
       {
         path: 'dashboard',
@@ -148,6 +148,16 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  // 如果访问的不是登录页，且没有登录，则跳转到登录页
+  if (to.path !== '/login' && !localStorage.getItem('token')) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router 
