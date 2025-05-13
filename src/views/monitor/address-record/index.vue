@@ -8,17 +8,7 @@
             <span class="search-label">监听地址：</span>
             <el-input 
               v-model="searchForm.address" 
-              placeholder="输入" 
-              clearable 
-              style="width: 220px" 
-            />
-          </div>
-          
-          <div class="search-item">
-            <span class="search-label">客户：</span>
-            <el-input 
-              v-model="searchForm.customerId" 
-              placeholder="输入客户ID/客户名称" 
+              placeholder="输入关键词" 
               clearable 
               style="width: 220px" 
             />
@@ -103,7 +93,6 @@ import { appState } from '@/constants/appState'
 // 搜索表单
 const searchForm = reactive({
   address: '',
-  customerId: '',
   type: '',
   timeRange: [] as string[]
 })
@@ -189,7 +178,6 @@ const handleSearch = () => {
 // 重置搜索
 const handleReset = () => {
   searchForm.address = ''
-  searchForm.customerId = ''
   searchForm.type = ''
   searchForm.timeRange = []
   pagination.pageNum = 1

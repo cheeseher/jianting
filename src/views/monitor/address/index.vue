@@ -25,24 +25,14 @@
             <span class="search-label">地址：</span>
             <el-input
               v-model="searchForm.address"
-              placeholder="输入关键词"
+              placeholder="输入关键字"
               clearable
               style="width: 220px"
             />
           </div>
           
           <div class="search-item">
-            <span class="search-label">客户：</span>
-            <el-input
-              v-model="searchForm.customerId"
-              placeholder="输入客户ID/名称"
-              clearable
-              style="width: 220px"
-            />
-          </div>
-          
-          <div class="search-item">
-            <span class="search-label">时间：</span>
+            <span class="search-label">添加时间：</span>
             <el-date-picker
               v-model="searchForm.timeRange"
               type="datetimerange"
