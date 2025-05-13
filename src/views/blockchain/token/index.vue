@@ -335,8 +335,13 @@ const getList = () => {
       }
     })
     
-    tokenList.value = filteredData
+    // 设置总数
     total.value = filteredData.length
+    
+    // 应用分页
+    const startIndex = (queryParams.pageNum - 1) * queryParams.pageSize
+    const endIndex = startIndex + queryParams.pageSize
+    tokenList.value = filteredData.slice(startIndex, endIndex)
   } catch (error) {
     console.error('获取代币列表失败', error)
     ElMessage.error('获取代币列表失败')

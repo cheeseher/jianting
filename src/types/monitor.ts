@@ -19,6 +19,21 @@ export interface MonitorAddress {
   secondaryListMode?: '' | 'manual' | 'auto';  // 二次列表开启方式：auto-自动，manual-手动，空字符串-关闭
   isInSecondaryList?: boolean; // 是否已进入二次列表状态
   monitorStatus?: boolean;    // 监控状态
+
+  // 币种监控条件相关字段
+  monitorChains?: string[];   // 要监控的公链列表
+  monitorTokens?: string[];   // 要监控的代币列表，格式为 "${chain}-${tokenId}"
+  
+  // 为每个币种单独存储监控条件
+  chainConditions?: Record<string, CurrencyCondition>; // 公链单独监控条件，key为公链名称
+  tokenConditions?: Record<string, CurrencyCondition>; // 代币单独监控条件，key为"${chain}-${tokenId}"格式
+}
+
+// 币种监控条件类型
+export interface CurrencyCondition {
+  triggerAmount: number;      // 单笔触发金额
+  maxPercentage: number;      // 历史最大单笔金额百分比
+  triggerAction: 'transfer' | 'multi-sign';  // 触发动作
 }
 
 // 地址查询参数

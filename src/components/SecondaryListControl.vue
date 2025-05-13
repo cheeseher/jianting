@@ -1,5 +1,5 @@
 <template>
-  <div class="secondary-list-control" style="width: 280px">
+  <div class="secondary-list-control" style="width: 100%">
     <el-select
       v-model="mode"
       placeholder="请选择二次列表模式"
@@ -14,7 +14,7 @@
     <el-tag
       v-if="mode"
       :type="address.isInSecondaryList ? 'success' : 'warning'"
-      style="margin-left: 8px"
+      style="margin-left: 12px"
     >
       {{ address.isInSecondaryList ? '已进入二次列表' : '待触发进入' }}
     </el-tag>

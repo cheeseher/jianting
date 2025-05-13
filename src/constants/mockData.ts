@@ -184,7 +184,7 @@ export const blockchainList: BlockchainInfo[] = [
     name: 'TRON',
     address: 'mfhjkdmnf.fmfhf',
     mainCurrency: 'TRX',
-    tokenCount: 80,
+    tokenCount: 1,
     explorerUrl: 'https://11111.com',
     addTime: '2024-09-27 15:00:00'
   },
@@ -193,7 +193,7 @@ export const blockchainList: BlockchainInfo[] = [
     name: 'BSC',
     address: 'mfhjkdmnf.fmfhf',
     mainCurrency: 'BSC',
-    tokenCount: 100,
+    tokenCount: 1,
     explorerUrl: 'https://11111.com',
     addTime: '2024-09-27 15:00:00'
   },
@@ -202,7 +202,7 @@ export const blockchainList: BlockchainInfo[] = [
     name: 'ETH',
     address: 'mfhjkdmnf.fmfhf',
     mainCurrency: 'ETH',
-    tokenCount: 9,
+    tokenCount: 1,
     explorerUrl: '',
     addTime: '2024-09-27 15:00:00'
   },
@@ -210,8 +210,8 @@ export const blockchainList: BlockchainInfo[] = [
     id: '4',
     name: 'BTC',
     address: 'mfhjkdmnf.fmfhf',
-    mainCurrency: 'BNB',
-    tokenCount: 10,
+    mainCurrency: 'BTC',
+    tokenCount: 1,
     explorerUrl: 'https://11111.com',
     addTime: '2024-09-27 15:00:00'
   }
@@ -219,6 +219,7 @@ export const blockchainList: BlockchainInfo[] = [
 
 // 代币数据
 export const tokenList: TokenInfo[] = [
+  // BSC链上的代币(只保留1个)
   {
     id: '1',
     name: 'Binance USD',
@@ -228,31 +229,34 @@ export const tokenList: TokenInfo[] = [
     decimals: 18,
     addTime: '2024-09-27 15:00:00'
   },
+  // ETH链上的代币(只保留1个)
   {
     id: '2',
     name: 'Tether USD',
     symbol: 'USDT',
-    contract: '0x55d398326f99059ff775485246999027b3197955',
-    blockchain: 'BSC',
-    decimals: 18,
+    contract: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    blockchain: 'ETH',
+    decimals: 6,
     addTime: '2024-09-27 15:00:00'
   },
+  // TRON链上的代币(只保留1个)
   {
     id: '3',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    contract: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
-    blockchain: 'BSC',
+    name: 'JUST',
+    symbol: 'JST',
+    contract: 'TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9',
+    blockchain: 'TRON',
     decimals: 18,
     addTime: '2024-09-27 15:00:00'
   },
+  // BTC链上的代币(只保留1个)
   {
     id: '4',
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    contract: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c',
-    blockchain: 'BSC',
-    decimals: 18,
+    name: 'Wrapped Bitcoin',
+    symbol: 'WBTC',
+    contract: '',
+    blockchain: 'BTC',
+    decimals: 8,
     addTime: '2024-09-27 15:00:00'
   }
 ]
