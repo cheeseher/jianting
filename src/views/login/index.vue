@@ -126,7 +126,8 @@ const handleLogin = () => {
 
 .verify-code-container {
   display: flex;
-  gap: 12px;
+  gap: 20px;
+  width: 100%;
 }
 
 .verify-code-input {
@@ -145,6 +146,7 @@ const handleLogin = () => {
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .verify-code:hover {

@@ -58,7 +58,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="openPasswordDrawer">修改密码</el-dropdown-item>
-                <el-dropdown-item divided>退出登录</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -245,6 +245,13 @@ const submitPasswordForm = () => {
       }
     }, 1000)
   })
+}
+
+// 退出登录
+const handleLogout = () => {
+  ElMessage.success('退出成功')
+  localStorage.removeItem('token')
+  router.push('/login')
 }
 </script>
 
