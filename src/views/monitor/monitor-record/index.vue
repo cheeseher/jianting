@@ -110,7 +110,18 @@
             <span :class="row.amount.startsWith('+') ? 'amount-positive' : 'amount-negative'">{{ row.amount }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="customer" label="客户" min-width="120" />
+        <el-table-column prop="customer" label="客户" min-width="120">
+          <template #default="{ row }">
+            <div class="customer-cell">
+              <div>
+                {{ formatCustomerInfo(row.customer, 2) }}
+                <span v-if="getCustomerCount(row.customer) > 2" class="view-all" @click.stop="(e) => showCustomerDetails(row, e)">
+                  全部
+                </span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="callbackTime" label="交易时间" min-width="160" />
         
         <!-- 新增字段：是否命中监控 -->
@@ -166,6 +177,33 @@
           @current-change="handleCurrentChange"
         />
       </div>
+      
+      <!-- 客户详情弹窗 -->
+      <el-dialog
+        v-model="customerDetailsVisible"
+        :title="`客户列表`"
+        width="500px"
+      >
+        <div v-if="currentRecord">
+          <el-table
+            :data="customerList"
+            border
+            style="width: 100%"
+          >
+            <el-table-column type="index" label="序号" width="70" align="center" />
+            <el-table-column label="客户ID" min-width="120">
+              <template #default="{ row }">
+                {{ row.id }}
+              </template>
+            </el-table-column>
+            <el-table-column label="客户名称" min-width="180">
+              <template #default="{ row }">
+                {{ row.name }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -409,6 +447,52 @@ const viewTriggerRecord = (row: EnhancedCallbackRecord) => {
   })
   ElMessage.success(`跳转到异常记录ID: ${row.triggerId}`)
 }
+
+// 格式化客户信息，只显示最多maxCount个客户
+const formatCustomerInfo = (customerInfo: string | undefined, maxCount: number): string => {
+  if (!customerInfo) return '-'
+  
+  const customers = customerInfo.split(',')
+  if (customers.length <= maxCount) return customerInfo
+  
+  return customers.slice(0, maxCount).join(',')
+}
+
+// 获取客户数量
+const getCustomerCount = (customerInfo: string | undefined): number => {
+  if (!customerInfo) return 0
+  return customerInfo.split(',').length
+}
+
+// 客户详情弹窗相关
+const customerDetailsVisible = ref(false)
+const currentRecord = ref<any>(null)
+const customerList = ref<any[]>([])
+
+// 显示客户详情
+const showCustomerDetails = (row: any, event?: Event) => {
+  if (event) {
+    event.stopPropagation()
+  }
+  
+  currentRecord.value = row
+  
+  // 解析客户字符串，格式如："张三 (100001),李四 (100002),王五 (100003)"
+  const customerStr = row.customer || ''
+  const customers = customerStr.split(',').map((item: string) => {
+    const matches = item.match(/(.+)\s*\((.+)\)/)
+    if (matches && matches.length >= 3) {
+      return {
+        name: matches[1].trim(),
+        id: matches[2].trim()
+      }
+    }
+    return { name: item.trim(), id: '' }
+  })
+  
+  customerList.value = customers
+  customerDetailsVisible.value = true
+}
 </script>
 
 <style scoped>
@@ -467,5 +551,27 @@ const viewTriggerRecord = (row: EnhancedCallbackRecord) => {
 .amount-negative {
   color: #F56C6C;
   font-weight: bold;
+}
+
+.view-all {
+  color: #409EFF;
+  cursor: pointer;
+  margin-left: 5px;
+  font-weight: 500;
+}
+
+.view-all:hover {
+  color: #66b1ff;
+  text-decoration: underline;
+}
+
+.customer-cell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.customer-cell > div {
+  white-space: pre-line;
 }
 </style> 
