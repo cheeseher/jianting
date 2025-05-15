@@ -10,8 +10,13 @@
           </div>
           
           <div class="search-item">
-            <span class="search-label">客户：</span>
-            <el-input v-model="queryParams.customer" placeholder="输入客户ID/名称" clearable style="width: 220px" />
+            <span class="search-label">客户ID：</span>
+            <el-input v-model="queryParams.customerId" placeholder="请输入客户ID" clearable style="width: 168px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">客户名称：</span>
+            <el-input v-model="queryParams.customerName" placeholder="请输入客户名称" clearable style="width: 168px" />
           </div>
           
           <div class="search-item">
@@ -197,9 +202,11 @@ import { Warning, RefreshRight, Document } from '@element-plus/icons-vue'
 // 查询参数
 const queryParams = reactive<ActionRecordQueryParams>({
   monitorAddress: '',
-  customer: '',
+  customerId: '',
+  customerName: '',
   actionType: '',
   actionStatus: '',
+  triggerSource: '',
   pageNum: 1,
   pageSize: 10
 })
@@ -287,9 +294,10 @@ const getList = () => {
         item.monitorAddress.includes(queryParams.monitorAddress as string))
     }
     
-    if (queryParams.customer) {
+    if (queryParams.customerId || queryParams.customerName) {
       filteredData = filteredData.filter(item => 
-        item.customer.includes(queryParams.customer as string))
+        (item.customer && item.customer.includes(queryParams.customerId as string)) ||
+        (item.customer && item.customer.includes(queryParams.customerName as string)))
     }
     
     if (queryParams.actionType) {
@@ -343,12 +351,13 @@ const handleQuery = () => {
 
 // 重置按钮点击事件
 const handleReset = () => {
+  queryParams.monitorAddress = ''
+  queryParams.customerId = ''
+  queryParams.customerName = ''
+  queryParams.actionType = ''
+  queryParams.actionStatus = ''
+  queryParams.triggerSource = ''
   dateRange.value = []
-  Object.keys(queryParams).forEach(key => {
-    if (key !== 'pageNum' && key !== 'pageSize') {
-      (queryParams as any)[key] = ''
-    }
-  })
   queryParams.pageNum = 1
   getList()
 }

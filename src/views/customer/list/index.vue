@@ -5,12 +5,22 @@
       <el-card shadow="never" class="card-container">
         <div class="search-container">
           <div class="search-item">
-            <span class="search-label">客户：</span>
+            <span class="search-label">客户ID：</span>
             <el-input 
-              v-model="searchForm.keyword" 
-              placeholder="输入客户ID/名称" 
+              v-model="searchForm.customerId" 
+              placeholder="请输入客户ID" 
               clearable 
-              style="width: 220px" 
+              style="width: 168px" 
+            />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">客户名称：</span>
+            <el-input 
+              v-model="searchForm.customerName" 
+              placeholder="请输入客户名称" 
+              clearable 
+              style="width: 168px" 
             />
           </div>
           
@@ -219,7 +229,8 @@ import { Edit, Delete } from '@element-plus/icons-vue'
 
 // 搜索表单
 const searchForm = reactive({
-  keyword: '',
+  customerId: '',
+  customerName: '',
   status: '',
   timeRange: [] as [string, string] | []
 })
@@ -331,11 +342,14 @@ const fetchTableData = () => {
     let filteredData = [...appState.customerData]
     
     // 应用过滤
-    if (searchForm.keyword) {
-      const keyword = searchForm.keyword.toLowerCase()
-      filteredData = filteredData.filter(item => 
-        item.id.toLowerCase().includes(keyword) || 
-        item.name.toLowerCase().includes(keyword))
+    if (searchForm.customerId) {
+      const id = searchForm.customerId.toLowerCase()
+      filteredData = filteredData.filter(item => item.id.toLowerCase().includes(id))
+    }
+    
+    if (searchForm.customerName) {
+      const name = searchForm.customerName.toLowerCase()
+      filteredData = filteredData.filter(item => item.name.toLowerCase().includes(name))
     }
     
     if (searchForm.status !== '') {
@@ -367,7 +381,8 @@ const handleSearch = () => {
 
 // 重置搜索
 const resetSearch = () => {
-  searchForm.keyword = ''
+  searchForm.customerId = ''
+  searchForm.customerName = ''
   searchForm.status = ''
   searchForm.timeRange = []
   pagination.pageNum = 1

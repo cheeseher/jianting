@@ -54,8 +54,13 @@
           </div>
           
           <div class="search-item">
-            <span class="search-label">客户：</span>
-            <el-input v-model="queryParams.customer" placeholder="输入客户ID/名称" clearable style="width: 220px" />
+            <span class="search-label">客户ID：</span>
+            <el-input v-model="queryParams.customerId" placeholder="请输入客户ID" clearable style="width: 168px" />
+          </div>
+          
+          <div class="search-item">
+            <span class="search-label">客户名称：</span>
+            <el-input v-model="queryParams.customerName" placeholder="请输入客户名称" clearable style="width: 168px" />
           </div>
           
           <div class="search-item">
@@ -161,7 +166,8 @@ const queryParams = reactive<CallbackRecordQueryParams>({
   type: '',
   chain: '',
   tokenName: '',
-  customer: '',
+  customerId: '',
+  customerName: '',
   status: '',
   pageNum: 1,
   pageSize: 10
@@ -223,9 +229,10 @@ const getList = () => {
         item.tokenName && item.tokenName.includes(queryParams.tokenName as string))
     }
     
-    if (queryParams.customer) {
+    if (queryParams.customerId || queryParams.customerName) {
       filteredData = filteredData.filter(item => 
-        item.customer && item.customer.includes(queryParams.customer as string))
+        (item.customer && item.customer.includes(queryParams.customerId as string)) ||
+        (item.customer && item.customer.includes(queryParams.customerName as string)))
     }
     
     if (queryParams.status) {
@@ -253,9 +260,18 @@ const handleQuery = () => {
   getList()
 }
 
-// 重置按钮点击事件
+// 重置搜索
 const handleReset = () => {
-  queryFormRef.value?.resetFields()
+  queryParams.id = ''
+  queryParams.hash = ''
+  queryParams.monitorAddress = ''
+  queryParams.targetAddress = ''
+  queryParams.type = ''
+  queryParams.chain = ''
+  queryParams.tokenName = ''
+  queryParams.customerId = ''
+  queryParams.customerName = ''
+  queryParams.status = ''
   dateRange.value = []
   queryParams.pageNum = 1
   getList()

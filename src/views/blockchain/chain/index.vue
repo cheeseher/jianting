@@ -6,10 +6,12 @@
         <div class="search-container">
           <div class="search-item">
             <span class="search-label">公链：</span>
-            <el-select v-model="queryParams.name" placeholder="全部" clearable style="width: 168px">
-              <el-option label="全部" value="" />
-              <el-option v-for="item in chainOptions" :key="item" :label="item" :value="item" />
-            </el-select>
+            <el-input
+              v-model="queryParams.name"
+              placeholder="请输入公链名称"
+              clearable
+              style="width: 168px"
+            />
           </div>
           
           <div class="search-buttons">
@@ -182,9 +184,6 @@ const queryParams = reactive<BlockchainQueryParams>({
   pageNum: 1,
   pageSize: 10
 })
-
-// 公链选项
-const chainOptions = ref<string[]>(['BTC', 'ETH', 'BSC', 'TRON'])
 
 // 数据加载状态
 const loading = ref(false)

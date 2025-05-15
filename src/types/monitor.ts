@@ -105,7 +105,9 @@ export interface CallbackRecordQueryParams {
   type?: string;        // 类型
   chain?: string;       // 公链
   tokenName?: string;   // 代币名称
-  customer?: string;    // 客户
+  customerId?: string;  // 客户ID
+  customerName?: string; // 客户名称
+  customer?: string;    // 客户（兼容旧数据）
   timeRange?: string[]; // 回调时间范围
   status?: string;      // 回调状态
   pageNum: number;      // 页码
@@ -130,7 +132,9 @@ export interface TriggerRecord {
 // 异常触发记录查询参数
 export interface TriggerRecordQueryParams {
   monitorAddress?: string; // 监听地址
-  customer?: string;      // 客户
+  customerId?: string;    // 客户ID
+  customerName?: string;  // 客户名称
+  customer?: string;      // 客户（兼容旧数据）
   triggerAction?: string; // 触发动作
   actionStatus?: string;  // 动作状态
   isSecondaryList?: boolean; // 是否为二次列表自动触发
@@ -155,7 +159,9 @@ export interface ActionRecord {
 // 动作执行记录查询参数
 export interface ActionRecordQueryParams {
   monitorAddress?: string; // 监听地址
-  customer?: string;      // 客户
+  customerId?: string;    // 客户ID
+  customerName?: string;  // 客户名称
+  customer?: string;      // 客户（兼容旧数据）
   actionType?: string;    // 动作类型
   actionStatus?: string;  // 动作状态
   triggerSource?: string; // 触发来源
