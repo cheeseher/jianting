@@ -369,7 +369,7 @@
                       <el-option
                         v-for="token in getTokensByChain(chain)"
                         :key="`${chain}-${token.id}`"
-                        :label="`${token.symbol} (${token.name})`"
+                        :label="token.symbol"
                         :value="`${chain}-${token.id}`"
                       />
                     </el-option-group>
