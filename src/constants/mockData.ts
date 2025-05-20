@@ -129,7 +129,7 @@ export const callbackRecords: CallbackRecord[] = [
     tokenName: 'BNB',
     tokenContract: '',
     amount: '+3.25',
-    customer: '张三 (100001),李四 (100002),王五 (100003)',
+    customer: '张三 (100001)',
     callbackTime: '2024-08-15 13:42:18',
     status: '成功'
   },
@@ -143,7 +143,7 @@ export const callbackRecords: CallbackRecord[] = [
     tokenName: 'USDT',
     tokenContract: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     amount: '-2500.00',
-    customer: '李四 (100002),赵六 (100004)',
+    customer: '李四 (100002)',
     callbackTime: '2024-08-18 09:15:33',
     status: '失败'
   },

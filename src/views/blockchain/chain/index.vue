@@ -91,7 +91,7 @@
               label-width="100px"
             >
               <el-form-item label="公链名称" prop="name">
-                <el-input v-model="form.name" placeholder="请输入公链名称" />
+                <el-input v-model="form.name" placeholder="请输入公链名称" :disabled="dialogType === 'edit'" />
               </el-form-item>
               <el-form-item label="公链地址" prop="address">
                 <el-input v-model="form.address" placeholder="请输入公链地址" />

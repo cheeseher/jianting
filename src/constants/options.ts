@@ -38,16 +38,15 @@ export const triggerActionOptions = [
 // 动作状态选项（异常触发）
 export const actionStatusOptions = [
   { label: '全部', value: '' },
-  { label: '未提交', value: '未提交' },
-  { label: '提交成功', value: '提交成功' },
-  { label: '提交失败', value: '提交失败' }
+  { label: '成功', value: '成功' },
+  { label: '失败', value: '失败' },
+  { label: '处理中', value: '处理中' }
 ]
 
 // 动作执行状态选项
 export const actionExecuteStatusOptions = [
   { label: '全部', value: '' },
-  { label: '提交成功', value: '提交成功' },
-  { label: '处理中', value: '处理中' },
+  { label: '成功', value: '成功' },
   { label: '失败', value: '失败' },
-  { label: '完成', value: '完成' }
+  { label: '处理中', value: '处理中' }
 ] 
