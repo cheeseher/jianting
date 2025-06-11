@@ -109,7 +109,20 @@
         <el-table-column prop="id" label="回调ID" min-width="100" />
         <el-table-column prop="hash" label="Hash" min-width="100" />
         <el-table-column prop="monitorAddress" label="监听地址" min-width="180" />
-        <el-table-column prop="targetAddress" label="对象地址" min-width="180" />
+        <el-table-column label="对象地址" min-width="180">
+          <template #default="{ row }">
+            <!-- BTC UTXO模型的特殊处理 -->
+            <template v-if="row.chain === 'BTC'">
+              <div class="address-with-details">
+                <el-button type="primary" link size="small" @click="showBtcDetails(row)">详情</el-button>
+              </div>
+            </template>
+            <!-- 其他币种的常规处理 -->
+            <template v-else>
+              <span class="ellipsis-text">{{ row.targetAddress }}</span>
+            </template>
+          </template>
+        </el-table-column>
         <el-table-column prop="type" label="类型" min-width="80" />
         <el-table-column prop="chain" label="公链" min-width="80" />
         <el-table-column prop="tokenName" label="币种" min-width="100" />
@@ -144,6 +157,100 @@
           @current-change="handleCurrentChange"
         />
       </div>
+      
+      <!-- BTC交易详情弹窗 -->
+      <el-dialog
+        v-model="btcDetailsVisible"
+        :title="`交易详情`"
+        width="500px"
+        class="btc-details-dialog"
+      >
+        <div v-if="currentBtcRecord" class="btc-dialog-simplified">
+          <!-- 转出交易 -->
+          <template v-if="currentBtcRecord.type === '转出'">
+            <div class="tx-type-badge">{{ currentBtcRecord.type }}</div>
+            
+            <div class="tx-amount-card">
+              <div class="tx-amount-value">{{ currentBtcRecord.netAmount }}</div>
+              <div class="tx-amount-label">净转出金额</div>
+            </div>
+            
+            <div class="tx-addresses">
+              <div class="tx-addr-section">
+                <div class="tx-addr-title">
+                  <span>发送地址</span>
+                </div>
+                <div class="tx-addr-content single-addr">
+                  <div class="addr-row">
+                    <div class="addr-text">{{ currentBtcRecord.fromAddresses?.[0] }}</div>
+                    <div class="addr-amount">{{ currentBtcRecord.fromAmounts?.[0] }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="tx-addr-section">
+                <div class="tx-addr-title">
+                  <span>接收地址</span>
+                </div>
+                <div class="tx-addr-content">
+                  <div v-for="(addr, index) in currentBtcRecord.toAddresses" :key="'to-'+index" class="addr-row">
+                    <div class="addr-text">{{ addr }}</div>
+                    <div class="addr-amount">{{ currentBtcRecord.toAmounts?.[index] }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-if="currentBtcRecord.changeAddress" class="tx-addr-section">
+                <div class="tx-addr-title">
+                  <span>找零地址</span>
+                </div>
+                <div class="tx-addr-content single-addr">
+                  <div class="addr-row">
+                    <div class="addr-text">{{ currentBtcRecord.changeAddress }}</div>
+                    <div class="addr-amount">{{ currentBtcRecord.changeAmount }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          
+          <!-- 转入交易 -->
+          <template v-else-if="currentBtcRecord.type === '转入' && currentBtcRecord.utxoData">
+            <div class="tx-type-badge receive">{{ currentBtcRecord.type }}</div>
+            
+            <div class="tx-amount-card receive">
+              <div class="tx-amount-value">{{ currentBtcRecord.utxoData.receivedAmount }}</div>
+              <div class="tx-amount-label">收到金额</div>
+            </div>
+            
+            <div class="tx-addresses">
+              <div class="tx-addr-section">
+                <div class="tx-addr-title">
+                  <span>来源地址</span>
+                </div>
+                <div class="tx-addr-content">
+                  <div v-for="(addr, index) in currentBtcRecord.utxoData.fromAddresses" :key="'from-'+index" class="addr-row">
+                    <div class="addr-text">{{ addr }}</div>
+                    <div class="addr-amount">{{ currentBtcRecord.utxoData.fromAmounts?.[index] }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="tx-addr-section">
+                <div class="tx-addr-title">
+                  <span>接收地址</span>
+                </div>
+                <div class="tx-addr-content single-addr">
+                   <div class="addr-row">
+                    <div class="addr-text">{{ currentBtcRecord.monitorAddress || currentBtcRecord.utxoData.toAddresses?.[0] }}</div>
+                    <div class="addr-amount">{{ currentBtcRecord.utxoData.receivedAmount }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -155,7 +262,7 @@ import type { CallbackRecord, CallbackRecordQueryParams } from '@/types/monitor'
 import { chainOptions, transactionTypeOptions, callbackStatusOptions } from '@/constants/options'
 import { useRoute } from 'vue-router'
 import { appState } from '@/constants/appState'
-import { RefreshRight } from '@element-plus/icons-vue'
+import { RefreshRight, ZoomIn } from '@element-plus/icons-vue'
 
 // 查询参数
 const queryParams = reactive<CallbackRecordQueryParams>({
@@ -311,6 +418,16 @@ const handleCurrentChange = (page: number) => {
 onMounted(() => {
   getList()
 })
+
+// BTC交易详情弹窗相关
+const btcDetailsVisible = ref(false)
+const currentBtcRecord = ref<any>(null)
+
+// 显示BTC交易详情
+const showBtcDetails = (row: any) => {
+  currentBtcRecord.value = row
+  btcDetailsVisible.value = true
+}
 </script>
 
 <style scoped>
@@ -361,5 +478,313 @@ onMounted(() => {
 .amount-negative {
   color: #67C23A;
   font-weight: bold;
+}
+
+/* UTXO模型相关样式 */
+.btc-address {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.address-label {
+  margin-right: 8px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.address-count {
+  margin-left: 5px;
+  background-color: #409EFF;
+  color: white;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.utxo-detail-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #EBEEF5;
+  color: #303133;
+}
+
+.utxo-detail {
+  font-size: 13px;
+}
+
+.utxo-from, .utxo-to, .utxo-change {
+  margin-bottom: 12px;
+}
+
+.utxo-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #606266;
+}
+
+.utxo-addr {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dashed #EBEEF5;
+}
+
+.utxo-amount {
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.utxo-net {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #EBEEF5;
+}
+
+.utxo-amount-large {
+  font-size: 16px;
+  font-weight: bold;
+  color: #F56C6C;
+  margin-top: 5px;
+}
+
+.ellipsis-text {
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* UTXO模型相关样式 */
+.clickable {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.clickable:hover {
+  color: #409EFF;
+}
+
+.view-details-icon {
+  margin-left: 5px;
+  color: #409EFF;
+  font-size: 14px;
+}
+
+.address-count-from {
+  background-color: #67C23A;
+}
+
+.btc-dialog-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #EBEEF5;
+}
+
+.btc-dialog-item {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.btc-dialog-label {
+  min-width: 80px;
+  color: #606266;
+  font-weight: bold;
+}
+
+.btc-dialog-value {
+  word-break: break-all;
+  color: #303133;
+}
+
+.btc-dialog-content {
+  margin-bottom: 20px;
+}
+
+.btc-dialog-footer {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.address-with-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-with-details .el-button {
+  margin-left: 8px;
+  padding: 2px 5px;
+}
+
+/* 新的简化弹窗样式 */
+.btc-dialog-simplified {
+  padding: 15px;
+}
+
+/* 交易类型标签 */
+.tx-type-badge {
+  display: inline-block;
+  background-color: #f56c6c;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.tx-type-badge.receive {
+  background-color: #67c23a;
+}
+
+/* 金额卡片 */
+.tx-amount-card {
+  background-color: #fef0f0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.tx-amount-card.receive {
+  background-color: #f0f9eb;
+}
+
+.tx-amount-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #f56c6c;
+  margin-bottom: 5px;
+}
+
+.tx-amount-card.receive .tx-amount-value {
+  color: #67c23a;
+}
+
+.tx-amount-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+/* 地址部分 */
+.tx-addresses {
+  background-color: white;
+  border-radius: 8px;
+}
+
+.tx-addr-section {
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ebeef5;
+  padding-bottom: 15px;
+}
+
+.tx-addr-section:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.tx-addr-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.tx-addr-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-right: 8px;
+  position: relative;
+}
+
+.from-icon {
+  background-color: #ecf5ff;
+}
+
+.from-icon:after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 5px;
+  width: 8px;
+  height: 6px;
+  border-left: 2px solid #409eff;
+  border-bottom: 2px solid #409eff;
+  transform: rotate(45deg);
+}
+
+.to-icon {
+  background-color: #f0f9eb;
+}
+
+.to-icon:after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 5px;
+  width: 8px;
+  height: 6px;
+  border-right: 2px solid #67c23a;
+  border-top: 2px solid #67c23a;
+  transform: rotate(45deg);
+}
+
+.change-icon {
+  background-color: #fdf6ec;
+}
+
+.change-icon:after {
+  content: '↻';
+  position: absolute;
+  color: #e6a23c;
+  font-size: 12px;
+  top: -2px;
+  left: 5px;
+}
+
+.tx-addr-content {
+  font-family: monospace;
+  font-size: 13px;
+  color: #606266;
+  word-break: break-all;
+}
+
+.single-addr {
+  padding: 5px 0;
+}
+
+.addr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dashed #ebeef5;
+}
+
+.addr-row:last-child {
+  border-bottom: none;
+}
+
+.addr-text {
+  word-break: break-all;
+  max-width: 70%;
+}
+
+.addr-amount {
+  background-color: #ecf5ff;
+  color: #409eff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 </style> 

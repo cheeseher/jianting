@@ -94,6 +94,26 @@ export interface CallbackRecord {
   customer: string;     // 客户
   callbackTime: string; // 回调时间
   status: string;       // 回调状态
+  
+  // UTXO模型特有字段（适用于BTC等UTXO模型的链）
+  fromAddresses?: string[];    // 输入地址列表
+  fromAmounts?: string[];      // 输入金额列表
+  toAddresses?: string[];      // 输出地址列表
+  toAmounts?: string[];        // 输出金额列表
+  changeAddress?: string;      // 找零地址（仅转出交易有）
+  changeAmount?: string;       // 找零金额（仅转出交易有）
+  netAmount?: string;          // 净转出金额（仅转出交易有）
+  receivedAmount?: string;     // 收到金额（仅转入交易有）
+  utxoData?: {                 // UTXO数据（替代方案）
+    fromAddresses: string[];   // 输入地址列表
+    fromAmounts: string[];     // 输入金额列表
+    toAddresses: string[];     // 输出地址列表
+    toAmounts: string[];       // 输出金额列表
+    changeAddress?: string;    // 找零地址（仅转出交易有）
+    changeAmount?: string;     // 找零金额（仅转出交易有）
+    netAmount?: string;        // 净转出金额（仅转出交易有）
+    receivedAmount?: string;   // 收到金额（仅转入交易有）
+  }
 }
 
 // 回调记录查询参数

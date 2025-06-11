@@ -165,15 +165,45 @@ export const callbackRecords: CallbackRecord[] = [
     id: '234234',
     hash: 'bc1qasdfghjklzxcvbnm0987654321qwertyuiop',
     monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    targetAddress: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
+    targetAddress: '1XYZabc123def456ghi789jkl012mno345pqr678,1LMNstu901vwx234yz5678ABCDEFG90HIJKLM',
     type: '转出',
     chain: 'BTC',
     tokenName: 'BTC',
     tokenContract: '',
-    amount: '-0.35',
+    amount: '-0.8',
     customer: '赵六 (100004)',
     callbackTime: '2024-08-22 05:37:42',
-    status: '成功'
+    status: '成功',
+    // UTXO模型特有字段
+    fromAddresses: ['bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'],
+    fromAmounts: ['0.6 BTC'],
+    toAddresses: ['1XYZabc123def456ghi789jkl012mno345pqr678', '1LMNstu901vwx234yz5678ABCDEFG90HIJKLM'],
+    toAmounts: ['0.5 BTC', '0.3 BTC'],
+    changeAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    changeAmount: '0.2 BTC',
+    netAmount: '0.8 BTC'
+  },
+  {
+    id: '987654',
+    hash: 'f7e6d5c4b3a2910111213141516171819202122232425262728293031323334',
+    monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    targetAddress: '1XYZabc123def456ghi789jkl012mno345pqr678',
+    type: '转入',
+    chain: 'BTC',
+    tokenName: 'BTC',
+    tokenContract: '',
+    amount: '+0.5',
+    customer: '赵六 (100004)',
+    callbackTime: '2024-09-01 08:45:23',
+    status: '成功',
+    // UTXO模型特有字段
+    utxoData: {
+      fromAddresses: ['1AAA111def456ghi789jkl012mno345pqr678', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'],
+      fromAmounts: ['0.4 BTC', '0.6 BTC'],
+      toAddresses: ['1XYZabc123def456ghi789jkl012mno345pqr678'],
+      toAmounts: ['0.5 BTC'],
+      receivedAmount: '0.5 BTC'
+    }
   }
 ]
 
@@ -422,6 +452,18 @@ export const triggerRecords: TriggerRecord[] = [
     triggerAction: '闪电转账',
     actionStatus: '提交成功',
     isSecondaryList: true
+  },
+  {
+    id: '1006',
+    triggerTime: '2024-09-01 08:47:15',
+    monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    customer: '赵六 (100004)',
+    hash: 'f7e6d5c4b3a2910111213141516171819202122232425262728293031323334',
+    amount: '0.58 BTC',
+    triggerDesc: '单笔金额≥0.5BTC 且 达到历史最大金额的125%',
+    triggerAction: '闪电转账',
+    actionStatus: '提交成功',
+    isSecondaryList: false
   }
 ]
 
@@ -478,6 +520,16 @@ export const actionRecords: ActionRecord[] = [
     actionStatus: '失败',
     failReason: '网络连接异常',
     triggerSource: '二次列表'
+  },
+  {
+    id: '2006',
+    executeTime: '2024-09-01 08:50:32',
+    monitorAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    customer: '赵六 (100004)',
+    relatedTriggerId: '1006',
+    actionType: '闪电转账',
+    actionStatus: '完成',
+    triggerSource: '监控条件命中'
   }
 ]
 
