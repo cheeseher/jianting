@@ -3,6 +3,7 @@ export interface MonitorAddress {
   id?: string;        // 地址ID
   address: string;    // 地址
   chain: string;      // 公链
+  receiveAddress?: string; // 收款地址
   mainBalance: string; // 主币余额
   tokenBalance: string; // 代币余额
   customers?: string[];  // 所属客户列表

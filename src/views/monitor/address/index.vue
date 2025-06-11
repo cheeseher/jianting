@@ -107,6 +107,13 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
+        <el-table-column label="收款地址" min-width="180">
+          <template #default="{ row }">
+            <el-tooltip :content="row.receiveAddress || row.address" placement="top">
+              <span class="ellipsis-text">{{ row.receiveAddress || row.address }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column label="主币余额" prop="mainBalance" width="100" />
         <el-table-column label="代币余额" min-width="180">
           <template #default="{ row }">
@@ -256,6 +263,10 @@
                     :value="item.value"
                   />
                 </el-select>
+              </el-form-item>
+              
+              <el-form-item label="收款地址" prop="receiveAddress" required>
+                <el-input v-model="form.receiveAddress" placeholder="请输入收款地址" />
               </el-form-item>
               
               <el-form-item label="二次列表" prop="secondaryListMode" v-if="dialogType === 'edit'">
@@ -682,6 +693,7 @@ const form = reactive({
   address: '',
   chain: '',
   customers: [] as string[],
+  receiveAddress: '',
   addTime: '',
   updateTime: ''
 })
@@ -694,6 +706,10 @@ const rules = {
   ],
   chain: [
     { required: true, message: '请选择公链', trigger: 'change' }
+  ],
+  receiveAddress: [
+    { required: true, message: '请输入收款地址', trigger: 'blur' },
+    { min: 10, message: '地址长度不能少于10个字符', trigger: 'blur' }
   ]
 }
 
@@ -932,6 +948,7 @@ const handleEdit = (row: MonitorAddress) => {
   form.chain = row.chain
   form.addTime = row.addTime
   form.updateTime = row.updateTime
+  form.receiveAddress = row.receiveAddress || row.address
   
   // 处理客户信息
   if (row.customers && row.customers.length > 0) {
@@ -1035,6 +1052,7 @@ const submitForm = async () => {
         address: form.address,
         chain: form.chain,
         customers: form.customers,
+        receiveAddress: form.receiveAddress,
         mainBalance: '0',
         tokenBalance: '',
         addTime: form.addTime || now,
@@ -1086,6 +1104,7 @@ const resetForm = () => {
   form.address = ''
   form.chain = ''
   form.customers = []
+  form.receiveAddress = ''
   form.addTime = ''
   form.updateTime = ''
   
