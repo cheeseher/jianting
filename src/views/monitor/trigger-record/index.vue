@@ -128,15 +128,6 @@
         <el-table-column label="操作" fixed="right" width="180" align="left" class-name="operation-column">
           <template #default="{ row }">
             <div class="operation-buttons">
-              <el-button 
-                v-if="row.actionStatus === '提交失败'" 
-                type="primary" 
-                link 
-                :icon="Warning"
-                @click="showFailReason(row)"
-              >
-                查看原因
-              </el-button>
               <el-button type="primary" link :icon="View" @click="viewActionRecords(row)">查看动作执行</el-button>
             </div>
           </template>
@@ -347,17 +338,6 @@ const viewTransaction = (row: TriggerRecord) => {
     path: '/monitor/monitor-record',
     query: { hash: row.hash }
   })
-}
-
-// 查看失败原因
-const showFailReason = (row: TriggerRecord) => {
-  if (row.failReason) {
-    ElMessageBox.alert(row.failReason, '失败原因', {
-      confirmButtonText: '确定'
-    })
-  } else {
-    ElMessage.info('没有详细的失败原因')
-  }
 }
 
 // 查看动作执行记录

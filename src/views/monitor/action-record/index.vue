@@ -123,24 +123,6 @@
         <el-table-column label="操作" fixed="right" width="180" align="left" class-name="operation-column">
           <template #default="{ row }">
             <div class="operation-buttons">
-              <el-button 
-                v-if="row.actionStatus === '失败'" 
-                type="primary" 
-                link 
-                :icon="Warning"
-                @click="showFailReason(row)"
-              >
-                查看原因
-              </el-button>
-              <el-button 
-                v-if="row.actionStatus === '失败'" 
-                type="primary" 
-                link 
-                :icon="RefreshRight"
-                @click="handleRetry(row)"
-              >
-                重试
-              </el-button>
               <el-button type="primary" link :icon="Document" @click="handleDetail(row)">查看详情</el-button>
             </div>
           </template>
@@ -197,7 +179,7 @@ import type { ActionRecord, ActionRecordQueryParams } from '@/types/monitor'
 import { triggerActionOptions, actionExecuteStatusOptions } from '@/constants/options'
 import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
-import { Warning, RefreshRight, Document } from '@element-plus/icons-vue'
+import { Document } from '@element-plus/icons-vue'
 
 // 查询参数
 const queryParams = reactive<ActionRecordQueryParams>({
@@ -384,45 +366,6 @@ const viewTriggerRecord = (row: ActionRecord) => {
   router.push({
     path: '/monitor/trigger-record',
     query: { id: row.relatedTriggerId }
-  })
-}
-
-// 查看失败原因
-const showFailReason = (row: ActionRecord) => {
-  if (row.failReason) {
-    ElMessageBox.alert(row.failReason, '失败原因', {
-      confirmButtonText: '确定'
-    })
-  } else {
-    ElMessage.info('没有详细的失败原因')
-  }
-}
-
-// 重试操作
-const handleRetry = (row: ActionRecord) => {
-  ElMessageBox.confirm('确定要重试该动作吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage({
-      type: 'success',
-      message: '重试提交成功，动作执行中'
-    })
-    
-    // 更新状态（模拟后端操作）
-    const index = appState.actionData.findIndex(item => item.id === row.id)
-    if (index !== -1) {
-      appState.actionData[index] = {
-        ...appState.actionData[index],
-        actionStatus: '处理中',
-        executeTime: new Date().toLocaleString()
-      }
-      // 刷新列表
-      getList()
-    }
-  }).catch(() => {
-    // 取消操作
   })
 }
 
