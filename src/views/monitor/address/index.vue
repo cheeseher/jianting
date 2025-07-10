@@ -216,205 +216,222 @@
         width="800px"
         @closed="resetForm"
       >
-        <el-tabs v-model="activeTab">
-          <el-tab-pane label="基本信息" name="basicInfo">
-            <el-form
-              ref="formRef"
-              :model="form"
-              :rules="rules"
-              label-width="120px"
-            >
-              <el-form-item label="监听地址" prop="address" required>
-                <el-input v-model="form.address" placeholder="请输入监听地址" />
-              </el-form-item>
-              
-              <el-form-item label="选择公链" prop="chain" required>
-                <el-select v-model="form.chain" placeholder="请选择公链" class="filter-dropdown">
-                  <el-option
-                    v-for="item in chainOptions.filter(item => item.value)"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-              
-              <el-form-item label="选择客户" prop="customers">
-                <el-select
-                  v-model="form.customers"
-                  placeholder="请选择客户"
-                  multiple
-                  filterable
-                  collapse-tags
-                  collapse-tags-tooltip
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="item in customerOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-              
-              <el-form-item label="二次列表" prop="secondaryListMode" v-if="dialogType === 'edit'">
-                <el-select 
-                  v-model="conditionForm.secondaryListMode" 
-                  style="width: 220px"
-                  @change="handleEditSecondaryListModeChange"
-                >
-                  <el-option label="关闭" value="" />
-                  <el-option label="手动开启" value="manual" />
-                  <el-option label="自动开启" value="auto" />
-                </el-select>
-                <div v-if="conditionForm.secondaryListMode" style="margin-top: 8px">
-                  <el-tag :type="conditionForm.isInSecondaryList ? 'success' : 'warning'">
-                    {{ conditionForm.isInSecondaryList ? '已进入二次列表' : '待触发进入' }}
-                  </el-tag>
-                </div>
-              </el-form-item>
-              
-              <el-form-item label="状态" prop="status" v-if="dialogType === 'edit'">
-                <el-switch
-                  v-model="conditionForm.status"
-                  active-text="启用"
-                  inactive-text="禁用"
-                />
-              </el-form-item>
-            </el-form>
-          </el-tab-pane>
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="120px"
+        >
+          <el-form-item label="监听地址" prop="address" required>
+            <el-input v-model="form.address" placeholder="请输入监听地址" />
+          </el-form-item>
           
-          <el-tab-pane label="监控条件" name="monitorCondition" v-if="dialogType === 'edit'">
-            <div class="monitor-condition-container">
-              <el-form
-                ref="conditionFormRef"
-                :model="conditionForm"
-                :rules="conditionRules"
-                label-width="180px"
-                label-position="left"
-              >
-                <!-- 添加币种监控条件 -->
-                <el-divider content-position="left">币种监控条件</el-divider>
-                
-                <el-form-item label="监控公链" prop="monitorChains">
-                  <el-select
-                    v-model="conditionForm.monitorChains"
-                    multiple
-                    collapse-tags
-                    collapse-tags-tooltip
-                    placeholder="选择要监控的公链"
-                    style="width: 100%"
-                  >
-                    <el-option
-                      v-for="item in chainOptions.filter(item => item.value)"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"
-                    />
-                  </el-select>
-                </el-form-item>
-                
-                <!-- 公链监控条件设置 -->
-                <div v-if="conditionForm.monitorChains && conditionForm.monitorChains.length > 0">
-                  <div class="currency-condition-title">公链监控条件设置：</div>
-                  <div v-for="chain in conditionForm.monitorChains" :key="`chain-setting-${chain}`" class="currency-condition-item">
-                    <div class="currency-condition-header">
-                      <el-tag size="large">{{ chain }}</el-tag>
-                    </div>
-                    <div class="currency-condition-form">
-                      <el-form-item label="单笔触发金额" :prop="`chainConditions.${chain}.triggerAmount`">
-                        <el-input-number
-                          v-model="getChainCondition(chain).triggerAmount"
-                          :min="0"
-                          :precision="2"
-                          style="width: 180px"
-                        />
-                      </el-form-item>
-                      <el-form-item label="历史最大单笔金额百分比" :prop="`chainConditions.${chain}.maxPercentage`">
-                        <el-input-number
-                          v-model="getChainCondition(chain).maxPercentage"
-                          :min="0"
-                          :precision="0"
-                          style="width: 180px"
-                        >
-                          <template #suffix>%</template>
-                        </el-input-number>
-                      </el-form-item>
-                      <el-form-item label="触发动作" :prop="`chainConditions.${chain}.triggerAction`">
-                        <el-select v-model="getChainCondition(chain).triggerAction" style="width: 180px">
-                          <el-option label="提交闪电转账" value="transfer" />
-                          <el-option label="提交多签" value="multi-sign" />
-                        </el-select>
-                      </el-form-item>
-                    </div>
-                  </div>
-                </div>
-                
-                <el-form-item label="监控代币" prop="monitorTokens">
-                  <el-select
-                    v-model="conditionForm.monitorTokens"
-                    multiple
-                    filterable
-                    collapse-tags
-                    collapse-tags-tooltip
-                    placeholder="选择要监控的代币"
-                    style="width: 100%"
-                  >
-                    <el-option-group
-                      v-for="chain in blockchainList.map(bc => bc.name)"
-                      :key="chain"
-                      :label="chain"
-                    >
-                      <el-option
-                        v-for="token in getTokensByChain(chain)"
-                        :key="`${chain}-${token.id}`"
-                        :label="token.symbol"
-                        :value="`${chain}-${token.id}`"
-                      />
-                    </el-option-group>
-                  </el-select>
-                </el-form-item>
-                
-                <!-- 代币监控条件设置 -->
-                <div v-if="conditionForm.monitorTokens && conditionForm.monitorTokens.length > 0">
-                  <div class="currency-condition-title">代币监控条件设置：</div>
-                  <div v-for="tokenId in conditionForm.monitorTokens" :key="`token-setting-${tokenId}`" class="currency-condition-item">
-                    <div class="currency-condition-header">
-                      <el-tag size="large" type="success">{{ formatTokenIdWithChain(tokenId) }}</el-tag>
-                    </div>
-                    <div class="currency-condition-form">
-                      <el-form-item label="单笔触发金额" :prop="`tokenConditions.${tokenId}.triggerAmount`">
-                        <el-input-number
-                          v-model="getTokenCondition(tokenId).triggerAmount"
-                          :min="0"
-                          :precision="2"
-                          style="width: 180px"
-                        />
-                      </el-form-item>
-                      <el-form-item label="历史最大单笔金额百分比" :prop="`tokenConditions.${tokenId}.maxPercentage`">
-                        <el-input-number
-                          v-model="getTokenCondition(tokenId).maxPercentage"
-                          :min="0"
-                          :precision="0"
-                          style="width: 180px"
-                        >
-                          <template #suffix>%</template>
-                        </el-input-number>
-                      </el-form-item>
-                      <el-form-item label="触发动作" :prop="`tokenConditions.${tokenId}.triggerAction`">
-                        <el-select v-model="getTokenCondition(tokenId).triggerAction" style="width: 180px">
-                          <el-option label="提交闪电转账" value="transfer" />
-                          <el-option label="提交多签" value="multi-sign" />
-                        </el-select>
-                      </el-form-item>
-                    </div>
-                  </div>
-                </div>
-              </el-form>
+          <el-form-item label="监听币种" prop="coinConfig">
+            <el-radio-group v-model="form.coinConfig" @change="handleCoinConfigChange">
+              <el-radio-button label="default">默认配置</el-radio-button>
+              <el-radio-button label="custom">自定义</el-radio-button>
+            </el-radio-group>
+            <div class="coin-config-tip" v-if="form.coinConfig === 'default'">
+              <div class="tip-content">
+                <el-icon style="margin-right: 8px; color: #409EFF;"><InfoFilled /></el-icon>
+                默认监听所有已配置的币种（主币 + 代币），并自动继承"公链管理"和"代币管理"中的规则。
+              </div>
             </div>
-          </el-tab-pane>
-        </el-tabs>
+          </el-form-item>
+          
+          <template v-if="form.coinConfig === 'custom'">
+            <el-divider content-position="left">监控条件配置</el-divider>
+            
+            <el-form-item label="选择币种">
+              <div class="currency-tabs">
+                <el-tabs v-model="activeTabName" type="card" class="currency-condition-tabs">
+                  <el-tab-pane label="主链监控" name="chain"></el-tab-pane>
+                  <el-tab-pane label="代币监控" name="token"></el-tab-pane>
+                </el-tabs>
+                
+                <div v-if="activeTabName === 'chain'" class="currency-condition-content">
+                  <el-table 
+                    :data="allChains" 
+                    border 
+                    style="width: 100%"
+                    :header-cell-style="tableHeaderStyle"
+                    :row-class-name="tableRowClassName"
+                    stripe
+                    highlight-current-row
+                  >
+                    <el-table-column label="公链" width="150" align="left">
+                      <template #default="{ row }">
+                        <div class="coin-name">{{ row.label || row }}</div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="100" align="center">
+                      <template #default="{ row }">
+                        <el-switch
+                          v-model="chainStatusMap[row.value || row]"
+                          active-color="#13ce66"
+                          inactive-color="#ff4949"
+                          @change="handleChainStatusChange(row.value || row)"
+                        />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="单笔触发金额" width="180" align="center">
+                      <template #default="{ row }">
+                        <el-input
+                          v-model="getChainCondition(row.value || row).triggerAmount"
+                          size="small"
+                          style="width: 130px"
+                          :disabled="!chainStatusMap[row.value || row]"
+                        />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="历史最大单笔金额百分比" width="240" align="center">
+                      <template #default="{ row }">
+                        <el-input-number
+                          v-model="getChainCondition(row.value || row).maxPercentage"
+                          size="small"
+                          style="width: 130px"
+                          :min="0"
+                          :max="100"
+                          :step="1"
+                          :disabled="!chainStatusMap[row.value || row]"
+                          :controls-position="'right'"
+                        />
+                        <span style="margin-left: 5px">%</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="触发动作" width="180" align="center">
+                      <template #default="{ row }">
+                        <el-select 
+                          v-model="getChainCondition(row.value || row).triggerAction" 
+                          size="small" 
+                          style="width: 130px"
+                          :disabled="!chainStatusMap[row.value || row]"
+                        >
+                          <el-option label="提交闪电转账" value="transfer" />
+                          <el-option label="提交多签" value="multi-sign" />
+                        </el-select>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+                
+                <div v-else-if="activeTabName === 'token'" class="currency-condition-content">
+                  <el-table 
+                    :data="allTokens" 
+                    border 
+                    style="width: 100%"
+                    :header-cell-style="tableHeaderStyle"
+                    :row-class-name="tableRowClassName"
+                    stripe
+                    highlight-current-row
+                  >
+                    <el-table-column label="代币" width="150" align="left">
+                      <template #default="{ row }">
+                        <div class="coin-name">{{ formatTokenIdWithChain(row) }}</div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="100" align="center">
+                      <template #default="{ row }">
+                        <el-switch
+                          v-model="tokenStatusMap[row]"
+                          active-color="#13ce66"
+                          inactive-color="#ff4949"
+                          @change="handleTokenStatusChange(row)"
+                        />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="单笔触发金额" width="180" align="center">
+                      <template #default="{ row }">
+                        <el-input
+                          v-model="getTokenCondition(row).triggerAmount"
+                          size="small"
+                          style="width: 130px"
+                          :disabled="!tokenStatusMap[row]"
+                        />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="历史最大单笔金额百分比" width="240" align="center">
+                      <template #default="{ row }">
+                        <el-input-number
+                          v-model="getTokenCondition(row).maxPercentage"
+                          size="small"
+                          style="width: 130px"
+                          :min="0"
+                          :max="100"
+                          :step="1"
+                          :disabled="!tokenStatusMap[row]"
+                          :controls-position="'right'"
+                        />
+                        <span style="margin-left: 5px">%</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="触发动作" width="180" align="center">
+                      <template #default="{ row }">
+                        <el-select 
+                          v-model="getTokenCondition(row).triggerAction" 
+                          size="small" 
+                          style="width: 130px"
+                          :disabled="!tokenStatusMap[row]"
+                        >
+                          <el-option label="提交闪电转账" value="transfer" />
+                          <el-option label="提交多签" value="multi-sign" />
+                        </el-select>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </div>
+            </el-form-item>
+          </template>
+          
+          <el-form-item label="选择客户" prop="customers">
+            <el-select
+              v-model="form.customers"
+              placeholder="请选择客户"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in customerOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="二次列表" prop="secondaryListMode">
+            <div class="secondary-list-container">
+              <el-select 
+                v-model="conditionForm.secondaryListMode" 
+                style="width: 220px"
+                @change="handleEditSecondaryListModeChange"
+              >
+                <el-option label="关闭" value="" />
+                <el-option label="手动开启" value="manual" />
+                <el-option label="自动开启" value="auto" />
+              </el-select>
+              <el-tag 
+                v-if="conditionForm.secondaryListMode" 
+                :type="dialogType === 'add' || !conditionForm.isInSecondaryList ? 'warning' : 'success'"
+                class="status-tag"
+              >
+                {{ dialogType === 'add' || !conditionForm.isInSecondaryList ? '待触发进入' : '已进入二次列表' }}
+              </el-tag>
+            </div>
+          </el-form-item>
+          
+          <el-form-item label="状态" prop="status">
+            <el-switch
+              v-model="conditionForm.status"
+              active-text="启用"
+              inactive-text="禁用"
+            />
+          </el-form-item>
+        </el-form>
         
         <template #footer>
           <el-button @click="dialogVisible = false">取消</el-button>
@@ -521,17 +538,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, h } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
-import type { MonitorAddress } from '@/types/monitor'
+import type { MonitorAddress, CurrencyCondition } from '@/types/monitor'
 import { chainOptions } from '@/constants/options'
 import { deleteAddress, batchDeleteAddress, addAddress } from '@/constants/mockApi'
-import { ArrowDown, Edit, Delete } from '@element-plus/icons-vue'
+import { ArrowDown, Edit, Delete, InfoFilled } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { appState } from '@/constants/appState'
 import SecondaryListControl from '@/components/SecondaryListControl.vue'
 import { tokenList, blockchainList } from '@/constants/mockData'
-import { useAppStore } from '@/stores'
+
+// 表格样式
+const tableHeaderStyle = () => {
+  return {
+    background: '#f5f7fa',
+    color: '#606266',
+    fontWeight: 'bold',
+    borderBottom: '1px solid #EBEEF5',
+    padding: '12px 0',
+    height: '48px'
+  }
+}
+
+// 表格行样式
+const tableRowClassName = ({ row, rowIndex }: { row: any; rowIndex: number }) => {
+  return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
+}
 
 // 搜索表单
 const searchForm = reactive({
@@ -540,6 +573,125 @@ const searchForm = reactive({
   customerId: '',
   timeRange: [] as string[]
 })
+
+// 币种选择临时变量
+const chainSelectionTemp = ref<string[]>([])
+const tokenSelectionTemp = ref<string[]>([])
+const tokenSearchKeyword = ref('')
+const activeTabName = ref('chain')  // 当前激活的标签页，默认为主链监控
+
+// 币种状态管理
+const chainStatusMap = ref<Record<string, boolean>>({})
+const tokenStatusMap = ref<Record<string, boolean>>({})
+const tokenFilterKeyword = ref('')
+const tokenCurrentPage = ref(1)
+const tokenPageSize = 10
+
+// 获取所有公链
+const allChains = computed(() => {
+  return chainOptions.filter(item => item.value)
+})
+
+// 获取所有代币
+const allTokens = computed(() => {
+  const tokens: string[] = []
+  blockchainList.forEach(blockchain => {
+    const chainTokens = getTokensByChain(blockchain.name)
+      .map(token => `${blockchain.name}-${token.id}`)
+    tokens.push(...chainTokens)
+  })
+  return tokens
+})
+
+// 根据关键词过滤后的代币
+const filteredAllTokens = computed(() => {
+  if (!tokenFilterKeyword.value) return allTokens.value
+  
+  return allTokens.value.filter(tokenId => {
+    const tokenInfo = formatTokenIdWithChain(tokenId).toLowerCase()
+    return tokenInfo.includes(tokenFilterKeyword.value.toLowerCase())
+  })
+})
+
+// 分页后的代币列表
+const filteredCurrencyTokens = computed(() => {
+  const start = (tokenCurrentPage.value - 1) * tokenPageSize
+  const end = start + tokenPageSize
+  return filteredAllTokens.value.slice(start, end)
+})
+
+// 处理代币分页变化
+const handleTokenPageChange = (page: number) => {
+  tokenCurrentPage.value = page
+}
+
+// 初始化币种监控条件
+const initializeCurrencyStatus = () => {
+  // 初始化所有公链状态（默认全部启用）
+  allChains.value.forEach(chain => {
+    const chainId = chain.value as string
+    chainStatusMap.value[chainId] = true
+    
+    // 初始化监控条件
+    if (!conditionForm.chainConditions[chainId]) {
+      conditionForm.chainConditions[chainId] = {
+        triggerAmount: 100,
+        maxPercentage: 110,
+        triggerAction: 'transfer'
+      }
+    }
+  })
+  
+  // 初始化所有代币状态（默认全部启用）
+  allTokens.value.forEach(tokenId => {
+    tokenStatusMap.value[tokenId] = true
+    
+    // 初始化监控条件
+    if (!conditionForm.tokenConditions[tokenId]) {
+      conditionForm.tokenConditions[tokenId] = {
+        triggerAmount: 50,
+        maxPercentage: 100,
+        triggerAction: 'transfer'
+      }
+    }
+  })
+}
+
+// 处理公链状态变化
+const handleChainStatusChange = (chain: string) => {
+  const status = chainStatusMap.value[chain]
+  
+  if (status) {
+    // 启用监控，添加到监控列表
+    if (!conditionForm.monitorChains.includes(chain)) {
+      conditionForm.monitorChains.push(chain)
+    }
+  } else {
+    // 禁用监控，从监控列表移除
+    const index = conditionForm.monitorChains.indexOf(chain)
+    if (index !== -1) {
+      conditionForm.monitorChains.splice(index, 1)
+    }
+  }
+}
+
+// 处理代币状态变化
+const handleTokenStatusChange = (tokenId: string) => {
+  const status = tokenStatusMap.value[tokenId]
+  
+  if (status) {
+    // 启用监控，添加到监控列表
+    if (!conditionForm.monitorTokens.includes(tokenId)) {
+      conditionForm.monitorTokens.push(tokenId)
+    }
+  } else {
+    // 禁用监控，从监控列表移除
+    const index = conditionForm.monitorTokens.indexOf(tokenId)
+    if (index !== -1) {
+      conditionForm.monitorTokens.splice(index, 1)
+    }
+  }
+}
 
 // 日期快捷选项
 const dateShortcuts = [
@@ -614,7 +766,6 @@ const conditionRules = reactive<FormRules>({
 // 代币余额详情相关
 const tokenDetailsVisible = ref(false)
 const tokenDetailAddress = ref<MonitorAddress | null>(null)
-const tokenSearchKeyword = ref('')
 const tokenPagination = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -671,11 +822,6 @@ const resetTokenSearch = () => {
   tokenPagination.pageNum = 1
 }
 
-// 处理代币分页
-const handleTokenPageChange = (page: number) => {
-  tokenPagination.pageNum = page
-}
-
 // 表单数据
 const form = reactive({
   id: '',
@@ -683,7 +829,8 @@ const form = reactive({
   chain: '',
   customers: [] as string[],
   addTime: '',
-  updateTime: ''
+  updateTime: '',
+  coinConfig: 'default' as 'default' | 'custom' // 新增字段，用于控制是否自定义监控条件
 })
 
 // 表单校验规则
@@ -691,9 +838,6 @@ const rules = {
   address: [
     { required: true, message: '请输入监听地址', trigger: 'blur' },
     { min: 10, message: '地址长度不能少于10个字符', trigger: 'blur' }
-  ],
-  chain: [
-    { required: true, message: '请选择公链', trigger: 'change' }
   ]
 }
 
@@ -764,13 +908,14 @@ const generateMockMonitorCondition = (addressId: string) => {
   
   if (!hasCondition) {
     return {
-      monitorStatus: firstChar % 5 !== 0 // 80%的地址启用状态
+      monitorStatus: firstChar % 5 !== 0, // 80%的地址启用状态
+      maxPercentage: 0 // 没有条件时，比例为0
     }
   }
   
   // 生成随机监控公链
-  const mockChains = []
-  const allChains = chainOptions.filter(item => item.value).map(item => item.value)
+  const mockChains: string[] = []
+  const allChains = chainOptions.filter(item => item.value).map(item => item.value as string)
   
   // 决定监控的公链数量（0-3个）
   const chainCount = firstChar % 4
@@ -830,7 +975,8 @@ const generateMockMonitorCondition = (addressId: string) => {
     monitorChains: mockChains,
     monitorTokens: mockTokens,
     chainConditions: mockChainConditions,
-    tokenConditions: mockTokenConditions
+    tokenConditions: mockTokenConditions,
+    maxPercentage: 0 // 没有条件时，比例为0
   }
 }
 
@@ -918,6 +1064,14 @@ const handleBatchExport = () => {
 const handleAddAddress = () => {
   dialogType.value = 'add'
   resetForm()
+  
+  // 默认选择默认配置
+  form.coinConfig = 'default'
+  
+  // 设置默认二次列表和状态
+  conditionForm.secondaryListMode = 'auto'
+  conditionForm.status = true
+  
   dialogVisible.value = true
 }
 
@@ -929,7 +1083,6 @@ const handleEdit = (row: MonitorAddress) => {
   // 复制基本信息
   form.id = row.id || ''
   form.address = row.address
-  form.chain = row.chain
   form.addTime = row.addTime
   form.updateTime = row.updateTime
   
@@ -943,12 +1096,16 @@ const handleEdit = (row: MonitorAddress) => {
     form.customers = []
   }
   
-  dialogVisible.value = true
-  
   // 填充监控条件表单
   conditionForm.secondaryListMode = row.secondaryListMode || ''
   conditionForm.isInSecondaryList = row.isInSecondaryList || false
   conditionForm.status = row.monitorStatus !== undefined ? row.monitorStatus : true
+  
+  // 判断是否使用自定义配置（如果有设置监控条件，则认为是自定义）
+  const hasCustomConfig = (row.monitorChains && row.monitorChains.length > 0) || 
+                          (row.monitorTokens && row.monitorTokens.length > 0)
+  
+  form.coinConfig = hasCustomConfig ? 'custom' : 'default'
   
   // 填充币种监控条件
   conditionForm.monitorChains = row.monitorChains || []
@@ -962,6 +1119,26 @@ const handleEdit = (row: MonitorAddress) => {
   if (row.tokenConditions) {
     conditionForm.tokenConditions = JSON.parse(JSON.stringify(row.tokenConditions))
   }
+  
+  // 初始化币种状态
+  if (form.coinConfig === 'custom') {
+    // 初始化币种状态Map
+    chainStatusMap.value = {}
+    tokenStatusMap.value = {}
+    
+    // 设置已配置公链的状态为开启
+    allChains.value.forEach(chain => {
+      const chainId = chain.value as string
+      chainStatusMap.value[chainId] = conditionForm.monitorChains.includes(chainId)
+    })
+    
+    // 设置已配置代币的状态为开启
+    allTokens.value.forEach(tokenId => {
+      tokenStatusMap.value[tokenId] = conditionForm.monitorTokens.includes(tokenId)
+    })
+  }
+  
+  dialogVisible.value = true
 }
 
 // 删除地址
@@ -1033,38 +1210,83 @@ const submitForm = async () => {
       const data: MonitorAddress = {
         id: form.id,
         address: form.address,
-        chain: form.chain,
+        chain: 'ETH', // 默认设置为ETH
         customers: form.customers,
         mainBalance: '0',
         tokenBalance: '',
         addTime: form.addTime || now,
         updateTime: now,
-        secondaryListMode: dialogType.value === 'add' ? 'auto' : conditionForm.secondaryListMode, // 新增地址时默认为自动模式
+        secondaryListMode: conditionForm.secondaryListMode, // 使用用户选择的二次列表模式
         isInSecondaryList: false, // 新增地址时默认为未进入状态
-        monitorStatus: conditionForm.status
+        monitorStatus: conditionForm.status,
+        maxPercentage: 0 // 新增地址时，比例为0
       }
       
-      // 如果是编辑模式且当前在监控条件标签页，保存监控条件
-      if (dialogType.value === 'edit' && activeTab.value === 'monitorCondition') {
-        if (conditionFormRef.value) {
-          const validCondition = await conditionFormRef.value.validate()
-            .then(() => true)
-            .catch(() => false)
-          
-          if (validCondition) {
-            // 将监控条件数据合并到地址数据中
-            Object.assign(data, {
-              // 添加币种监控条件
-              monitorChains: conditionForm.monitorChains,
-              monitorTokens: conditionForm.monitorTokens,
-              chainConditions: conditionForm.chainConditions,
-              tokenConditions: conditionForm.tokenConditions
-            })
-          } else {
-            submitLoading.value = false
-            return
-          }
-        }
+      // 根据用户选择的币种配置方式来处理
+      if (form.coinConfig === 'default') {
+        // 使用默认配置：监听所有币种，继承公链和代币管理规则
+        const allChainsData = allChains.value.map(item => item.value as string);
+        data.monitorChains = allChainsData;
+        
+        const allTokensData = allTokens.value;
+        data.monitorTokens = allTokensData;
+        
+        // 为每个公链和代币设置默认规则
+        const chainConditions: Record<string, CurrencyCondition> = {};
+        allChainsData.forEach(chain => {
+          chainConditions[chain] = {
+            triggerAmount: 100, // 默认值，实际应从公链管理中获取
+            maxPercentage: 110, // 默认值，实际应从公链管理中获取
+            triggerAction: 'transfer' // 默认值，实际应从公链管理中获取
+          };
+        });
+        data.chainConditions = chainConditions;
+        
+        const tokenConditions: Record<string, CurrencyCondition> = {};
+        allTokensData.forEach(tokenId => {
+          tokenConditions[tokenId] = {
+            triggerAmount: 50, // 默认值，实际应从代币管理中获取
+            maxPercentage: 100, // 默认值，实际应从代币管理中获取
+            triggerAction: 'transfer' // 默认值，实际应从代币管理中获取
+          };
+        });
+        data.tokenConditions = tokenConditions;
+      } 
+      else if (form.coinConfig === 'custom') {
+        // 使用自定义配置：用户设置的币种和条件
+        // 根据开关状态筛选实际监控的币种
+        const activeChains = allChains.value
+          .map(item => item.value as string)
+          .filter(chain => chainStatusMap.value[chain]);
+        
+        const activeTokens = allTokens.value
+          .filter(tokenId => tokenStatusMap.value[tokenId]);
+        
+        // 设置监控的币种
+        data.monitorChains = activeChains;
+        data.monitorTokens = activeTokens;
+        
+        // 筛选出实际需要的条件
+        const filteredChainConditions: Record<string, CurrencyCondition> = {};
+        activeChains.forEach(chain => {
+          filteredChainConditions[chain] = conditionForm.chainConditions[chain] || {
+            triggerAmount: 100,
+            maxPercentage: 110,
+            triggerAction: 'transfer'
+          };
+        });
+        
+        const filteredTokenConditions: Record<string, CurrencyCondition> = {};
+        activeTokens.forEach(tokenId => {
+          filteredTokenConditions[tokenId] = conditionForm.tokenConditions[tokenId] || {
+            triggerAmount: 50,
+            maxPercentage: 100,
+            triggerAction: 'transfer'
+          };
+        });
+        
+        data.chainConditions = filteredChainConditions;
+        data.tokenConditions = filteredTokenConditions;
       }
       
       await addAddress(data)
@@ -1084,21 +1306,21 @@ const submitForm = async () => {
 const resetForm = () => {
   form.id = ''
   form.address = ''
-  form.chain = ''
   form.customers = []
   form.addTime = ''
   form.updateTime = ''
+  form.coinConfig = 'default' // 重置监控条件配置
   
   if (formRef.value) {
     formRef.value.resetFields()
   }
   
-  // 重置监控条件表单
+  // 重置监控条件表单，但保留二次列表设置
   conditionForm.secondaryListMode = dialogType.value === 'add' ? 'auto' : ''
   conditionForm.isInSecondaryList = false
   conditionForm.status = true
   
-  // 重置币种监控条件
+  // 清空监控条件（但不立即重置，而是在对话框打开时根据dialogType进行适当的初始化）
   conditionForm.monitorChains = []
   conditionForm.monitorTokens = []
   conditionForm.chainConditions = {}
@@ -1426,6 +1648,40 @@ const handleEditSecondaryListModeChange = async (value: string) => {
   }
 }
 
+// 初始化监控条件
+const initializeMonitorConditions = () => {
+  // 设置监控所有公链
+  const allChains = chainOptions.filter(item => item.value).map(item => item.value as string);
+  conditionForm.monitorChains = allChains;
+  
+  // 设置监控所有代币
+  const allTokens: string[] = [];
+  blockchainList.forEach(chain => {
+    const chainTokens = tokenList.filter(token => token.blockchain === chain.name)
+      .map(token => `${chain.name}-${token.id}`);
+    allTokens.push(...chainTokens);
+  });
+  conditionForm.monitorTokens = allTokens;
+  
+  // 为每个公链设置默认监控条件
+  allChains.forEach(chain => {
+    conditionForm.chainConditions[chain] = {
+      triggerAmount: 100, // 默认值，实际应从公链管理中获取
+      maxPercentage: 110, // 默认值，实际应从公链管理中获取
+      triggerAction: 'transfer' // 默认值，实际应从公链管理中获取
+    };
+  });
+  
+  // 为每个代币设置默认监控条件
+  allTokens.forEach(tokenId => {
+    conditionForm.tokenConditions[tokenId] = {
+      triggerAmount: 50, // 默认值，实际应从代币管理中获取
+      maxPercentage: 100, // 默认值，实际应从代币管理中获取
+      triggerAction: 'transfer' // 默认值，实际应从代币管理中获取
+    };
+  });
+}
+
 // 从mockData中获取特定公链的代币列表
 const getTokensByChain = (chain: string) => {
   return tokenList.filter(token => token.blockchain === chain)
@@ -1490,10 +1746,205 @@ const formatTokenIdWithChain = (tokenId: string) => {
   return token ? `${chain} - ${token.symbol}` : tokenId
 }
 
+// 移除公链监控条件
+const removeChain = (chain: string) => {
+  if (conditionForm.monitorChains.includes(chain)) {
+    conditionForm.monitorChains = conditionForm.monitorChains.filter(c => c !== chain)
+    // 使用 delete 操作符删除条件，而不是设置为 undefined
+    delete conditionForm.chainConditions[chain]
+  }
+}
+
+// 移除代币监控条件
+const removeToken = (tokenId: string) => {
+  if (conditionForm.monitorTokens.includes(tokenId)) {
+    conditionForm.monitorTokens = conditionForm.monitorTokens.filter(t => t !== tokenId)
+    // 使用 delete 操作符删除条件，而不是设置为 undefined
+    delete conditionForm.tokenConditions[tokenId]
+  }
+}
+
+// 处理币种配置方式切换
+const handleCoinConfigChange = (value: 'default' | 'custom') => {
+  if (value === 'custom') {
+    // 切换到自定义配置时，初始化监控条件
+    initializeCurrencyStatus()
+  } else {
+    // 切换到默认配置时，清空自定义设置
+    conditionForm.monitorChains = []
+    conditionForm.monitorTokens = []
+    conditionForm.chainConditions = {}
+    conditionForm.tokenConditions = {}
+  }
+}
+
+// 添加主链
+const handleAddChain = () => {
+  // 打开选择公链弹窗
+  ElMessageBox({
+    title: '选择公链',
+    message: h => h(
+      'div', 
+      { class: 'coin-selection-container' },
+      [
+        h('el-checkbox-group', {
+          modelValue: chainSelectionTemp.value,
+          'onUpdate:modelValue': (val) => { chainSelectionTemp.value = val },
+        }, chainOptions.filter(item => item.value).map(chain => 
+          h('el-checkbox', { 
+            label: chain.value,
+            key: chain.value,
+            border: true,
+            size: 'large',
+            class: 'coin-selection-item'
+          }, { default: () => chain.label })
+        ))
+      ]
+    ),
+    beforeClose: (action, instance, done) => {
+      if (action === 'confirm') {
+        // 添加选中的公链
+        const newChains = chainSelectionTemp.value.filter(
+          chain => !conditionForm.monitorChains.includes(chain)
+        )
+        
+        if (newChains.length === 0) {
+          ElMessage.warning('未选择新的公链')
+          return
+        }
+        
+        conditionForm.monitorChains.push(...newChains)
+        
+        // 为新添加的公链初始化监控条件
+        newChains.forEach(chain => {
+          if (!conditionForm.chainConditions[chain]) {
+            conditionForm.chainConditions[chain] = {
+              triggerAmount: 100,
+              maxPercentage: 110,
+              triggerAction: 'transfer'
+            }
+          }
+        })
+        
+        ElMessage.success(`已添加 ${newChains.length} 个公链`)
+        chainSelectionTemp.value = []
+      }
+      done()
+    },
+    showCancelButton: true,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    customClass: 'coin-selection-dialog'
+  })
+}
+
+// 添加代币
+const handleAddToken = () => {
+  // 打开选择代币弹窗
+  ElMessageBox({
+    title: '选择代币',
+    message: h => h(
+      'div', 
+      { class: 'coin-selection-container' },
+      [
+        h('div', { class: 'coin-selection-search' }, [
+          h('el-input', {
+            placeholder: '搜索代币',
+            modelValue: tokenSearchKeyword.value,
+            'onUpdate:modelValue': (val) => { tokenSearchKeyword.value = val },
+            clearable: true,
+            prefix: 'Search'
+          })
+        ]),
+        h('div', { class: 'coin-selection-list' },
+          blockchainList.map(blockchain => {
+            const tokens = getTokensByChain(blockchain.name).filter(token => 
+              !tokenSearchKeyword.value || token.symbol.toLowerCase().includes(tokenSearchKeyword.value.toLowerCase())
+            )
+            
+            if (tokens.length === 0) return null
+            
+            return [
+              h('div', { class: 'coin-selection-group-title' }, blockchain.name),
+              h('div', { class: 'coin-selection-group' },
+                tokens.map(token => {
+                  const tokenId = `${blockchain.name}-${token.id}`
+                  return h('el-checkbox', {
+                    modelValue: tokenSelectionTemp.value.includes(tokenId),
+                    'onUpdate:modelValue': (checked) => {
+                      if (checked) {
+                        tokenSelectionTemp.value.push(tokenId)
+                      } else {
+                        const index = tokenSelectionTemp.value.indexOf(tokenId)
+                        if (index !== -1) {
+                          tokenSelectionTemp.value.splice(index, 1)
+                        }
+                      }
+                    },
+                    label: tokenId,
+                    key: tokenId,
+                    border: true,
+                    class: 'coin-selection-item'
+                  }, { default: () => token.symbol })
+                })
+              )
+            ]
+          }).filter(Boolean).flat()
+        )
+      ]
+    ),
+    beforeClose: (action, instance, done) => {
+      if (action === 'confirm') {
+        // 添加选中的代币
+        const newTokens = tokenSelectionTemp.value.filter(
+          token => !conditionForm.monitorTokens.includes(token)
+        )
+        
+        if (newTokens.length === 0) {
+          ElMessage.warning('未选择新的代币')
+          return
+        }
+        
+        conditionForm.monitorTokens.push(...newTokens)
+        
+        // 为新添加的代币初始化监控条件
+        newTokens.forEach(tokenId => {
+          if (!conditionForm.tokenConditions[tokenId]) {
+            conditionForm.tokenConditions[tokenId] = {
+              triggerAmount: 50,
+              maxPercentage: 100,
+              triggerAction: 'transfer'
+            }
+          }
+        })
+        
+        ElMessage.success(`已添加 ${newTokens.length} 个代币`)
+        tokenSelectionTemp.value = []
+      }
+      done()
+    },
+    showCancelButton: true,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    customClass: 'coin-selection-dialog'
+  })
+}
+
 // 初始化
 onMounted(() => {
   fetchAddressList()
 })
+
+// 获取代币符号
+const getTokenSymbol = (tokenId: string): string => {
+  if (!tokenId) return '';
+  
+  const [chain, id] = tokenId.split('-');
+  if (!chain || !id) return '';
+  
+  const token = tokenList.find(t => t.id === id && t.blockchain === chain);
+  return token ? token.symbol : '';
+}
 </script>
 
 <style scoped>
@@ -1701,8 +2152,13 @@ onMounted(() => {
   gap: 8px;
 }
 
+.secondary-list-container {
+  display: flex;
+  align-items: center;
+}
+
 .status-tag {
-  margin-left: 8px;
+  margin-left: 12px;
 }
 
 .monitor-currency-popover {
@@ -1765,9 +2221,161 @@ onMounted(() => {
   margin-bottom: 15px;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* Added for button alignment */
 }
 
 .currency-condition-form {
   padding-left: 10px;
+}
+
+.coin-config-tip {
+  margin-top: 10px;
+  padding: 0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.tip-content {
+  background-color: #ecf5ff;
+  padding: 12px 15px;
+  border-radius: 4px;
+  border: 1px solid #d9ecff;
+  color: #606266;
+  display: flex;
+  align-items: center;
+}
+
+.currency-tabs {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.currency-condition-tabs {
+  margin-bottom: 15px;
+}
+
+.currency-condition-content {
+  padding: 0;
+  margin-top: 15px;
+}
+
+.table-operation {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.el-dialog {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.el-dialog .el-dialog__body {
+  overflow: auto;
+  padding: 20px 20px 0 20px;
+}
+
+.el-tabs--border-card {
+  box-shadow: none;
+  border: 1px solid #dcdfe6;
+}
+
+.el-table {
+  margin-bottom: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 币种选择表格样式 */
+.el-tabs--border-card .el-table {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.el-tabs--border-card .el-table th.el-table__cell {
+  background-color: #f5f7fa !important;
+}
+
+.el-tabs--border-card .el-table .even-row {
+  background-color: #ffffff;
+}
+
+.el-tabs--border-card .el-table .odd-row {
+  background-color: #fafafa;
+}
+
+.el-tabs--border-card .el-table .el-table__row:hover td {
+  background-color: #ecf5ff !important;
+}
+
+.el-table .cell {
+  white-space: nowrap;
+}
+
+.el-tabs--border-card {
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+}
+
+.coin-name {
+  font-weight: 500;
+  color: #303133;
+  display: flex;
+  align-items: center;
+}
+
+.el-tabs--border-card > .el-tabs__content {
+  padding: 15px;
+}
+
+.coin-selection-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.coin-selection-search {
+  margin-bottom: 15px;
+}
+
+.coin-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.coin-selection-group-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #606266;
+  padding-left: 5px;
+  border-left: 3px solid #409EFF;
+}
+
+.coin-selection-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.coin-selection-item {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.coin-selection-dialog {
+  width: 600px;
+}
+
+.coin-selection-dialog .el-message-box__message {
+  max-height: 400px;
+  overflow: auto;
+}
+
+.pagination-container.token-pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style> 
