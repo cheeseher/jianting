@@ -58,9 +58,15 @@
           <el-input v-model="form.fromAddress" placeholder="请输入钱包地址" />
         </el-form-item>
         <el-form-item label="默认补充数量" prop="amount" required>
-          <el-input v-model.number="form.amount" placeholder="建议 0.005~0.05" style="width: 200px">
-            <template #append>{{ getChainUnit(form.chain) }}</template>
-          </el-input>
+          <el-input-number
+            v-model="form.amount"
+            :precision="18"
+            :step="0.000000000000000001"
+            :min="0"
+            placeholder="最多支持18位小数"
+            style="width: 200px"
+          />
+          <span style="margin-left: 8px">{{ getChainUnit(form.chain) }}</span>
         </el-form-item>
         <el-form-item label="是否启用" prop="enabled">
           <el-radio-group v-model="form.enabled">
@@ -135,7 +141,7 @@ const form = reactive({
   id: '',
   chain: '',
   fromAddress: '',
-  amount: 0,
+  amount: undefined, // 改为undefined，默认为空
   enabled: true
 })
 const rules = {
@@ -174,7 +180,7 @@ function resetForm() {
   form.id = ''
   form.chain = ''
   form.fromAddress = ''
-  form.amount = 0
+  form.amount = undefined // 改为undefined，重置为空
   form.enabled = true
   if (formRef.value) formRef.value.resetFields()
 }
