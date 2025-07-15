@@ -69,6 +69,12 @@ const routes: Array<RouteRecordRaw> = [
             name: 'ActionRecord',
             component: () => import('../views/monitor/action-record/index.vue'),
             meta: { title: '动作执行记录' }
+          },
+          {
+            path: 'gas-config',
+            name: 'GasConfig',
+            component: () => import('../views/monitor/gas-config/index.vue'),
+            meta: { title: 'Gas 补充设置', parent: 'Monitor' }
           }
         ]
       },
