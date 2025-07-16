@@ -23,9 +23,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="fromAddress" label="来源地址" min-width="220" />
+        <el-table-column prop="privateKey" label="私钥" min-width="180">
+          <template #default="{ row }">
+            {{ maskPrivateKey(row.privateKey) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="amount" label="默认补金额" min-width="140">
           <template #default="{ row }">
-            {{ row.amount }} {{ getChainUnit(row.chain) }}
+            {{ formatAmount(row.amount) }} {{ getChainUnit(row.chain) }}
           </template>
         </el-table-column>
         <el-table-column prop="enabled" label="是否启用" width="100">
@@ -56,6 +61,9 @@
         </el-form-item>
         <el-form-item label="来源地址" prop="fromAddress" required>
           <el-input v-model="form.fromAddress" placeholder="请输入钱包地址" />
+        </el-form-item>
+        <el-form-item label="私钥" prop="privateKey" required>
+          <el-input v-model="form.privateKey" placeholder="请输入私钥" type="password" show-password />
         </el-form-item>
         <el-form-item label="默认补充数量" prop="amount" required>
           <el-input-number
@@ -128,8 +136,8 @@ const getChainLabel = (val: string) => chainOptions.find(c => c.value === val)?.
 const getChainUnit = (val: string) => chainOptions.find(c => c.value === val)?.unit || ''
 
 const tableData = ref<any[]>([
-  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', amount: 0.01, enabled: true, createdAt: '2024-06-01 10:00:00' },
-  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', amount: 0.02, enabled: false, createdAt: '2024-06-02 11:00:00' }
+  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', privateKey: '0x1a2b3c4d5e6f...7890', amount: 0.01, enabled: true, createdAt: '2024-06-01 10:00:00' },
+  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', privateKey: '0x9a8b7c6d5e4f...3210', amount: 0.02, enabled: false, createdAt: '2024-06-02 11:00:00' }
 ])
 const tableLoading = ref(false)
 
@@ -141,12 +149,14 @@ const form = reactive({
   id: '',
   chain: '',
   fromAddress: '',
+  privateKey: '',
   amount: undefined, // 改为undefined，默认为空
   enabled: true
 })
 const rules = {
   chain: [{ required: true, message: '请选择链', trigger: 'change' }],
   fromAddress: [{ required: true, message: '请输入钱包地址', trigger: 'blur' }],
+  privateKey: [{ required: true, message: '请输入私钥', trigger: 'blur' }],
   amount: [{ required: true, message: '请输入补充数量', trigger: 'blur' }]
 }
 
@@ -168,7 +178,9 @@ function handleReset() {
 function openDialog(type: 'add'|'edit', row?: any) {
   dialogType.value = type
   if (type === 'edit' && row) {
-    Object.assign(form, row)
+    // 深拷贝数据，避免直接修改表格数据
+    const rowData = JSON.parse(JSON.stringify(row))
+    Object.assign(form, rowData)
   } else {
     resetForm()
     form.enabled = true
@@ -180,6 +192,7 @@ function resetForm() {
   form.id = ''
   form.chain = ''
   form.fromAddress = ''
+  form.privateKey = ''
   form.amount = undefined // 改为undefined，重置为空
   form.enabled = true
   if (formRef.value) formRef.value.resetFields()
@@ -191,9 +204,16 @@ function submitForm() {
     if (!valid) return
     submitLoading.value = true
     setTimeout(() => {
+      // 准备提交的数据
+      const submitData = {
+        ...form,
+        // 确保金额格式正确
+        amount: form.amount
+      }
+      
       if (dialogType.value === 'add') {
         tableData.value.push({
-          ...form,
+          ...submitData,
           id: Date.now().toString(),
           createdAt: new Date().toLocaleString()
         })
@@ -201,7 +221,7 @@ function submitForm() {
       } else {
         const idx = tableData.value.findIndex(item => item.id === form.id)
         if (idx > -1) {
-          tableData.value[idx] = { ...form }
+          tableData.value[idx] = { ...submitData }
           ElMessage.success('更新成功')
         }
       }
@@ -251,6 +271,25 @@ function copyAddress(address: string) {
   navigator.clipboard.writeText(address).then(() => {
     ElMessage.success('已复制到剪贴板')
   })
+}
+
+function maskPrivateKey(privateKey: string): string {
+  if (!privateKey) return '-'
+  if (privateKey.length <= 12) return privateKey
+  return `${privateKey.substring(0, 6)}...${privateKey.substring(privateKey.length - 4)}`
+}
+
+function formatAmount(amount: number | undefined): string {
+  if (amount === undefined || amount === null) return '-'
+  
+  // 转为字符串，确保不使用科学计数法
+  const str = amount.toFixed(18)
+  
+  // 去掉末尾所有的0
+  const trimmed = str.replace(/\.?0+$/, '')
+  
+  // 如果末尾是小数点，去掉小数点
+  return trimmed.replace(/\.$/, '')
 }
 </script>
 
