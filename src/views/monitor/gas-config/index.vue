@@ -23,16 +23,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="fromAddress" label="来源地址" min-width="220" />
-        <el-table-column prop="privateKey" label="私钥" min-width="180">
-          <template #default="{ row }">
-            {{ maskPrivateKey(row.privateKey) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="amount" label="默认补金额" min-width="140">
-          <template #default="{ row }">
-            {{ formatAmount(row.amount) }} {{ getChainUnit(row.chain) }}
-          </template>
-        </el-table-column>
         <el-table-column prop="enabled" label="是否启用" width="100">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'danger'">{{ row.enabled ? '启用' : '禁用' }}</el-tag>
@@ -61,20 +51,6 @@
         </el-form-item>
         <el-form-item label="来源地址" prop="fromAddress" required>
           <el-input v-model="form.fromAddress" placeholder="请输入钱包地址" />
-        </el-form-item>
-        <el-form-item label="私钥" prop="privateKey" required>
-          <el-input v-model="form.privateKey" placeholder="请输入私钥" type="password" show-password />
-        </el-form-item>
-        <el-form-item label="默认补充数量" prop="amount" required>
-          <el-input-number
-            v-model="form.amount"
-            :precision="18"
-            :step="0.000000000000000001"
-            :min="0"
-            placeholder="最多支持18位小数"
-            style="width: 200px"
-          />
-          <span style="margin-left: 8px">{{ getChainUnit(form.chain) }}</span>
         </el-form-item>
         <el-form-item label="是否启用" prop="enabled">
           <el-radio-group v-model="form.enabled">
@@ -120,24 +96,24 @@ import { ElMessage, FormInstance } from 'element-plus'
 
 // 固定链选项
 const chainOptions = [
-  { label: 'BCH (BCH)', value: 'BCH', unit: 'BCH' },
-  { label: 'BSC (BNB)', value: 'BSC', unit: 'BNB' },
-  { label: 'BTC (BTC)', value: 'BTC', unit: 'BTC' },
-  { label: 'ETC (ETC)', value: 'ETC', unit: 'ETC' },
-  { label: 'ETH (ETH)', value: 'ETH', unit: 'ETH' },
-  { label: 'LTC (LTC)', value: 'LTC', unit: 'LTC' },
-  { label: 'TRX (TRX)', value: 'TRX', unit: 'TRX' },
-  { label: 'ARBITRUM (ETH)', value: 'ARBITRUM', unit: 'ETH' },
-  { label: 'DOGE (DOGE)', value: 'DOGE', unit: 'DOGE' },
-  { label: 'POLYGON (MATIC)', value: 'POLYGON', unit: 'MATIC' }
+  { label: 'BCH', value: 'BCH', unit: 'BCH' },
+  { label: 'BSC', value: 'BSC', unit: 'BNB' },
+  { label: 'BTC', value: 'BTC', unit: 'BTC' },
+  { label: 'ETC', value: 'ETC', unit: 'ETC' },
+  { label: 'ETH', value: 'ETH', unit: 'ETH' },
+  { label: 'LTC', value: 'LTC', unit: 'LTC' },
+  { label: 'TRX', value: 'TRX', unit: 'TRX' },
+  { label: 'ARBITRUM', value: 'ARBITRUM', unit: 'ETH' },
+  { label: 'DOGE', value: 'DOGE', unit: 'DOGE' },
+  { label: 'POLYGON', value: 'POLYGON', unit: 'MATIC' }
 ]
 
 const getChainLabel = (val: string) => chainOptions.find(c => c.value === val)?.label || val
 const getChainUnit = (val: string) => chainOptions.find(c => c.value === val)?.unit || ''
 
 const tableData = ref<any[]>([
-  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', privateKey: '0x1a2b3c4d5e6f...7890', amount: 0.01, enabled: true, createdAt: '2024-06-01 10:00:00' },
-  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', privateKey: '0x9a8b7c6d5e4f...3210', amount: 0.02, enabled: false, createdAt: '2024-06-02 11:00:00' }
+  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', enabled: true, createdAt: '2024-06-01 10:00:00' },
+  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', enabled: false, createdAt: '2024-06-02 11:00:00' }
 ])
 const tableLoading = ref(false)
 
@@ -149,22 +125,19 @@ const form = reactive({
   id: '',
   chain: '',
   fromAddress: '',
-  privateKey: '',
-  amount: undefined, // 改为undefined，默认为空
   enabled: true
 })
 const rules = {
   chain: [{ required: true, message: '请选择链', trigger: 'change' }],
-  fromAddress: [{ required: true, message: '请输入钱包地址', trigger: 'blur' }],
-  privateKey: [{ required: true, message: '请输入私钥', trigger: 'blur' }],
-  amount: [{ required: true, message: '请输入补充数量', trigger: 'blur' }]
+  fromAddress: [{ required: true, message: '请输入钱包地址', trigger: 'blur' }]
 }
 
 const searchFromAddress = ref('')
 
 const filteredTableData = computed(() => {
   return tableData.value.filter(item => {
-    return !searchFromAddress.value || (item.fromAddress && item.fromAddress.toLowerCase().includes(searchFromAddress.value.toLowerCase()))
+    const matchAddress = !searchFromAddress.value || (item.fromAddress && item.fromAddress.toLowerCase().includes(searchFromAddress.value.toLowerCase()))
+    return matchAddress
   })
 })
 
@@ -192,8 +165,6 @@ function resetForm() {
   form.id = ''
   form.chain = ''
   form.fromAddress = ''
-  form.privateKey = ''
-  form.amount = undefined // 改为undefined，重置为空
   form.enabled = true
   if (formRef.value) formRef.value.resetFields()
 }
@@ -206,9 +177,7 @@ function submitForm() {
     setTimeout(() => {
       // 准备提交的数据
       const submitData = {
-        ...form,
-        // 确保金额格式正确
-        amount: form.amount
+        ...form
       }
       
       if (dialogType.value === 'add') {
@@ -258,7 +227,7 @@ function openRecordDialog(row: any) {
   // mock数据，实际可根据row.id请求
   recordTableData.value = Array.from({ length: 23 }, (_, i) => ({
     time: `2024-07-${(i%30+1).toString().padStart(2,'0')} 10:00:00`,
-    amount: `${(Math.random()*0.05+0.01).toFixed(3)} ETH`,
+    amount: `${(Math.random()*0.05+0.01).toFixed(3)} ${getChainUnit(row.chain)}`,
     exceptionId: (1000+i).toString(),
     address: row.fromAddress
   }))
@@ -271,25 +240,6 @@ function copyAddress(address: string) {
   navigator.clipboard.writeText(address).then(() => {
     ElMessage.success('已复制到剪贴板')
   })
-}
-
-function maskPrivateKey(privateKey: string): string {
-  if (!privateKey) return '-'
-  if (privateKey.length <= 12) return privateKey
-  return `${privateKey.substring(0, 6)}...${privateKey.substring(privateKey.length - 4)}`
-}
-
-function formatAmount(amount: number | undefined): string {
-  if (amount === undefined || amount === null) return '-'
-  
-  // 转为字符串，确保不使用科学计数法
-  const str = amount.toFixed(18)
-  
-  // 去掉末尾所有的0
-  const trimmed = str.replace(/\.?0+$/, '')
-  
-  // 如果末尾是小数点，去掉小数点
-  return trimmed.replace(/\.$/, '')
 }
 </script>
 
