@@ -23,6 +23,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="fromAddress" label="来源地址" min-width="220" />
+        <el-table-column prop="supplementAmount" label="补充数量" width="150">
+          <template #default="{ row }">
+            <span>{{ row.supplementAmount || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="enabled" label="是否启用" width="100">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'danger'">{{ row.enabled ? '启用' : '禁用' }}</el-tag>
@@ -51,6 +56,9 @@
         </el-form-item>
         <el-form-item label="来源地址" prop="fromAddress" required>
           <el-input v-model="form.fromAddress" placeholder="请输入钱包地址" />
+        </el-form-item>
+        <el-form-item label="补充数量" prop="supplementAmount" required>
+          <el-input v-model="form.supplementAmount" placeholder="请输入补充数量" type="number" step="0.001" min="0" />
         </el-form-item>
         <el-form-item label="是否启用" prop="enabled">
           <el-radio-group v-model="form.enabled">
@@ -112,8 +120,8 @@ const getChainLabel = (val: string) => chainOptions.find(c => c.value === val)?.
 const getChainUnit = (val: string) => chainOptions.find(c => c.value === val)?.unit || ''
 
 const tableData = ref<any[]>([
-  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', enabled: true, createdAt: '2024-06-01 10:00:00' },
-  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', enabled: false, createdAt: '2024-06-02 11:00:00' }
+  { id: '1', chain: 'ETH', fromAddress: '0x1234...abcd', supplementAmount: '0.1', enabled: true, createdAt: '2024-06-01 10:00:00' },
+  { id: '2', chain: 'BSC', fromAddress: '0x5678...efgh', supplementAmount: '0.05', enabled: false, createdAt: '2024-06-02 11:00:00' }
 ])
 const tableLoading = ref(false)
 
@@ -125,11 +133,16 @@ const form = reactive({
   id: '',
   chain: '',
   fromAddress: '',
+  supplementAmount: '',
   enabled: true
 })
 const rules = {
   chain: [{ required: true, message: '请选择链', trigger: 'change' }],
-  fromAddress: [{ required: true, message: '请输入钱包地址', trigger: 'blur' }]
+  fromAddress: [{ required: true, message: '请输入钱包地址', trigger: 'blur' }],
+  supplementAmount: [
+    { required: true, message: '请输入补充数量', trigger: 'blur' },
+    { pattern: /^\d+(\.\d+)?$/, message: '请输入有效的数字', trigger: 'blur' }
+  ]
 }
 
 const searchFromAddress = ref('')
@@ -165,6 +178,7 @@ function resetForm() {
   form.id = ''
   form.chain = ''
   form.fromAddress = ''
+  form.supplementAmount = ''
   form.enabled = true
   if (formRef.value) formRef.value.resetFields()
 }
@@ -284,4 +298,4 @@ function copyAddress(address: string) {
   display: flex;
   justify-content: flex-end;
 }
-</style> 
+</style>

@@ -117,6 +117,12 @@ const routes: Array<RouteRecordRaw> = [
             name: 'TelegramBot',
             component: () => import('../views/telegram/bot/index.vue'),
             meta: { title: 'TG机器人设置' }
+          },
+          {
+            path: 'monitor-sync',
+            name: 'MonitorSync',
+            component: () => import('../views/telegram/monitor-sync/index.vue'),
+            meta: { title: '监控同步' }
           }
         ]
       },
@@ -172,4 +178,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router 
+export default router
