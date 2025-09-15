@@ -71,6 +71,12 @@ const routes: Array<RouteRecordRaw> = [
             meta: { title: '动作执行记录' }
           },
           {
+            path: 'transfer-manage',
+            name: 'TransferManage',
+            component: () => import('../views/monitor/transfer-manage/index.vue'),
+            meta: { title: '转账管理' }
+          },
+          {
             path: 'gas-config',
             name: 'GasConfig',
             component: () => import('../views/monitor/gas-config/index.vue'),

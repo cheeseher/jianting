@@ -94,7 +94,12 @@
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column label="公链" prop="chain" width="100" />
+        <el-table-column label="公链" prop="chain" width="100">
+          <template #default="{ row }">
+            <span>{{ row.chain }}</span>
+            <span v-if="row.chain === 'BSC'" style="color: #f56c6c;">（已作废）</span>
+          </template>
+        </el-table-column>
         <el-table-column label="客户" width="100">
           <template #default="{ row }">
             <span 
@@ -184,14 +189,20 @@
         </el-table-column>
         <el-table-column label="添加时间" prop="addTime" width="180" />
         <el-table-column label="更新时间" prop="updateTime" width="180" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-popconfirm title="确认删除?" @confirm="handleDelete(row)">
-              <template #reference>
-                <el-button link type="danger" :icon="Delete">删除</el-button>
+            <el-dropdown @command="(command) => handleRowCommand(command, row)">
+              <el-button link type="primary">
+                操作 <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item command="maxTransaction">历史最大交易值</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
               </template>
-            </el-popconfirm>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -515,6 +526,79 @@
             />
           </div>
         </div>
+      </el-dialog>
+
+      <!-- 历史最大交易值弹窗 -->
+      <el-dialog
+        v-model="maxTransactionDialogVisible"
+        :title="`[${currentAddress?.address || ''}]最大金额`"
+        width="800px"
+      >
+        <div class="max-transaction-header">
+          <el-button type="primary" @click="openAddMaxTransactionDialog">新增最大金额</el-button>
+        </div>
+        
+        <el-table :data="maxTransactionList" border stripe style="margin-top: 16px;">
+          <el-table-column label="序号" type="index" width="70" align="center" />
+          <el-table-column prop="currency" label="币种" width="120" />
+          <el-table-column prop="maxAmount" label="历史交易的最大金额" min-width="200" />
+          <el-table-column prop="addTime" label="添加时间" min-width="160" />
+          <el-table-column label="操作" width="100" align="center">
+            <template #default="{ row }">
+              <el-button link type="danger" @click="confirmDeleteMaxTransaction(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        
+        <div class="pagination-container" style="margin-top: 16px;">
+          <el-pagination
+            v-model:current-page="maxTransactionPagination.pageNum"
+            v-model:page-size="maxTransactionPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="maxTransactionPagination.total"
+            @size-change="handleMaxTransactionSizeChange"
+            @current-change="handleMaxTransactionCurrentChange"
+          />
+        </div>
+      </el-dialog>
+
+      <!-- 新增最大金额弹窗 -->
+      <el-dialog
+        v-model="addMaxTransactionDialogVisible"
+        title="新增最大金额"
+        width="500px"
+        @closed="resetMaxTransactionForm"
+      >
+        <el-form
+          ref="maxTransactionFormRef"
+          :model="maxTransactionForm"
+          :rules="maxTransactionRules"
+          label-width="100px"
+        >
+          <el-form-item label="币种" prop="currency" required>
+            <el-select v-model="maxTransactionForm.currency" placeholder="请选择币种" style="width: 100%">
+              <el-option label="BTC" value="BTC" />
+              <el-option label="ETH" value="ETH" />
+              <el-option label="USDT" value="USDT" />
+              <el-option label="BNB" value="BNB" />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="最大值" prop="maxAmount" required>
+            <el-input v-model="maxTransactionForm.maxAmount" placeholder="请输入最大值" />
+            <div v-if="maxTransactionForm.maxAmount && !isValidAmount" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+              请输入
+            </div>
+          </el-form-item>
+        </el-form>
+        
+        <template #footer>
+          <el-button @click="addMaxTransactionDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitMaxTransactionForm" :loading="maxTransactionSubmitLoading">
+            确定
+          </el-button>
+        </template>
       </el-dialog>
     </div>
   </div>
@@ -1151,6 +1235,42 @@ const customerPagination = reactive({
   total: 0
 })
 
+// 历史最大交易值弹窗相关
+const maxTransactionDialogVisible = ref(false)
+const currentAddress = ref<MonitorAddress | null>(null)
+const maxTransactionList = ref<any[]>([])
+const maxTransactionPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 新增最大金额弹窗相关
+const addMaxTransactionDialogVisible = ref(false)
+const maxTransactionFormRef = ref<FormInstance>()
+const maxTransactionSubmitLoading = ref(false)
+const maxTransactionForm = reactive({
+  currency: '',
+  maxAmount: ''
+})
+
+// 最大金额表单校验规则
+const maxTransactionRules = {
+  currency: [
+    { required: true, message: '请选择币种', trigger: 'change' }
+  ],
+  maxAmount: [
+    { required: true, message: '请输入最大值', trigger: 'blur' },
+    { pattern: /^\d+(\.\d+)?$/, message: '请输入有效的数字', trigger: 'blur' }
+  ]
+}
+
+// 验证金额格式
+const isValidAmount = computed(() => {
+  if (!maxTransactionForm.maxAmount) return true
+  return /^\d+(\.\d+)?$/.test(maxTransactionForm.maxAmount)
+})
+
 // 过滤后的客户列表
 const filteredCustomers = computed(() => {
   if (!customerRelationAddress.value || !customerRelationAddress.value.customers) return []
@@ -1488,6 +1608,127 @@ const formatTokenIdWithChain = (tokenId: string) => {
   
   const token = tokenList.find(t => t.id === id && t.blockchain === chain)
   return token ? `${chain} - ${token.symbol}` : tokenId
+}
+
+// 行操作下拉菜单命令处理
+const handleRowCommand = (command: string, row: MonitorAddress) => {
+  if (command === 'edit') {
+    handleEdit(row)
+  } else if (command === 'maxTransaction') {
+    openMaxTransactionDialog(row)
+  } else if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
+// 打开历史最大交易值弹窗
+const openMaxTransactionDialog = (row: MonitorAddress) => {
+  currentAddress.value = row
+  maxTransactionDialogVisible.value = true
+  fetchMaxTransactionList()
+}
+
+// 获取历史最大交易值列表
+const fetchMaxTransactionList = () => {
+  // 模拟数据 - 实际项目中应该调用API
+  const mockData = [
+    {
+      id: '1',
+      currency: 'BTC',
+      maxAmount: '1.5',
+      addTime: '2024-08-31 20:11:13'
+    },
+    {
+      id: '2',
+      currency: 'ETH',
+      maxAmount: '25.8',
+      addTime: '2024-08-31 20:11:41'
+    }
+  ]
+  
+  maxTransactionList.value = mockData.slice(
+    (maxTransactionPagination.pageNum - 1) * maxTransactionPagination.pageSize,
+    maxTransactionPagination.pageNum * maxTransactionPagination.pageSize
+  )
+  maxTransactionPagination.total = mockData.length
+}
+
+// 打开新增最大金额弹窗
+const openAddMaxTransactionDialog = () => {
+  addMaxTransactionDialogVisible.value = true
+}
+
+// 提交最大金额表单
+const submitMaxTransactionForm = async () => {
+  if (!maxTransactionFormRef.value) return
+  
+  await maxTransactionFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    maxTransactionSubmitLoading.value = true
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      ElMessage.success('添加成功')
+      addMaxTransactionDialogVisible.value = false
+      fetchMaxTransactionList()
+    } catch (error) {
+      console.error('添加失败', error)
+      ElMessage.error('添加失败')
+    } finally {
+      maxTransactionSubmitLoading.value = false
+    }
+  })
+}
+
+// 重置最大金额表单
+const resetMaxTransactionForm = () => {
+  maxTransactionForm.currency = ''
+  maxTransactionForm.maxAmount = ''
+  
+  if (maxTransactionFormRef.value) {
+    maxTransactionFormRef.value.resetFields()
+  }
+}
+
+// 删除最大金额记录
+const deleteMaxTransaction = (row: any) => {
+  ElMessage.success('删除成功')
+  fetchMaxTransactionList()
+}
+
+// 确认删除最大金额记录
+const confirmDeleteMaxTransaction = (row: any) => {
+  ElMessageBox.confirm(
+    '确定要删除这条最大金额记录吗？',
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      deleteMaxTransaction(row)
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 最大金额分页事件处理
+const handleMaxTransactionSizeChange = (size: number) => {
+  maxTransactionPagination.pageSize = size
+  fetchMaxTransactionList()
+}
+
+const handleMaxTransactionCurrentChange = (current: number) => {
+  maxTransactionPagination.pageNum = current
+  fetchMaxTransactionList()
 }
 
 // 初始化

@@ -102,6 +102,7 @@
             </el-button>
           </template>
         </el-table-column>
+        <el-table-column prop="serverId" label="服务器ID" min-width="120" />
         <el-table-column prop="callbackUrl" label="回调地址" min-width="180" show-overflow-tooltip />
         <el-table-column prop="privateKey" label="私钥" min-width="180" show-overflow-tooltip />
         <el-table-column label="状态" width="80">
@@ -113,10 +114,20 @@
           </template>
         </el-table-column>
         <el-table-column prop="updateTime" label="更新时间" min-width="160" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" :icon="Delete" @click="confirmDelete(row)">删除</el-button>
+            <el-dropdown @command="(command) => handleRowCommand(command, row)">
+              <el-button link type="primary">
+                操作 <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item command="transfer">转账管理</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -154,6 +165,14 @@
           
           <el-form-item label="回调地址" prop="callbackUrl" required>
             <el-input v-model="form.callbackUrl" placeholder="请输入回调地址" />
+          </el-form-item>
+          
+          <el-form-item label="通知地址" prop="notifyUrl" required>
+            <el-input v-model="form.notifyUrl" placeholder="请输入通知地址" />
+          </el-form-item>
+          
+          <el-form-item label="服务器ID" prop="serverId" required>
+            <el-input v-model="form.serverId" placeholder="请输入服务器ID" />
           </el-form-item>
           
           <el-form-item label="私钥" prop="privateKey" required>
@@ -213,6 +232,76 @@
           />
         </div>
       </el-dialog>
+
+      <!-- 转账地址弹窗 -->
+      <el-dialog
+        v-model="transferAddressDialogVisible"
+        :title="`[${currentCustomer.id}]转账地址`"
+        width="800px"
+      >
+        <div class="transfer-address-header">
+          <el-button type="primary" @click="openAddTransferAddressDialog">新增转账地址</el-button>
+        </div>
+        
+        <el-table :data="transferAddressList" border stripe style="margin-top: 16px;">
+          <el-table-column label="序号" type="index" width="70" align="center" />
+          <el-table-column prop="chain" label="公链" width="100" />
+          <el-table-column prop="toAddress" label="to地址" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="addTime" label="添加时间" min-width="160" />
+          <el-table-column label="操作" width="100" align="center">
+            <template #default="{ row }">
+              <el-button link type="danger" @click="confirmDeleteTransferAddress(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        
+        <div class="pagination-container" style="margin-top: 16px;">
+          <el-pagination
+            v-model:current-page="transferAddressPagination.pageNum"
+            v-model:page-size="transferAddressPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="transferAddressPagination.total"
+            @size-change="handleTransferAddressSizeChange"
+            @current-change="handleTransferAddressCurrentChange"
+          />
+        </div>
+      </el-dialog>
+
+      <!-- 新增转账地址弹窗 -->
+      <el-dialog
+        v-model="addTransferAddressDialogVisible"
+        title="新增转账地址"
+        width="500px"
+        @closed="resetTransferAddressForm"
+      >
+        <el-form
+          ref="transferAddressFormRef"
+          :model="transferAddressForm"
+          :rules="transferAddressRules"
+          label-width="100px"
+        >
+          <el-form-item label="公链" prop="chain" required>
+            <el-select v-model="transferAddressForm.chain" placeholder="请选择公链" style="width: 100%">
+              <el-option label="TRX" value="TRX" />
+              <el-option label="POLYGON" value="POLYGON" />
+              <el-option label="BSC" value="BSC" />
+              <el-option label="ETH" value="ETH" />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="to地址" prop="toAddress" required>
+            <el-input v-model="transferAddressForm.toAddress" placeholder="请输入to地址" />
+          </el-form-item>
+        </el-form>
+        
+        <template #footer>
+          <el-button @click="addTransferAddressDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitTransferAddressForm" :loading="transferAddressSubmitLoading">
+            确定
+          </el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -220,12 +309,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
-import type { Customer } from '@/types/customer'
+import type { Customer, TransferAddress } from '@/types/customer'
 import { customerList } from '@/constants/mockData'
 import { addCustomer, updateCustomer, deleteCustomer } from '@/constants/mockApi'
 import { useRoute } from 'vue-router'
 import { appState } from '@/constants/appState'
-import { Edit, Delete } from '@element-plus/icons-vue'
+import { Edit, Delete, ArrowDown } from '@element-plus/icons-vue'
 
 // 搜索表单
 const searchForm = reactive({
@@ -295,6 +384,8 @@ const form = reactive({
   id: '',
   name: '',
   callbackUrl: '',
+  notifyUrl: '',
+  serverId: '',
   privateKey: '',
   status: true
 })
@@ -313,6 +404,18 @@ const rules = {
       trigger: 'blur' 
     }
   ],
+  notifyUrl: [
+    { required: true, message: '请输入通知地址', trigger: 'blur' },
+    { 
+      pattern: /^https?:\/\/.+/, 
+      message: '通知地址必须以http://或https://开头', 
+      trigger: 'blur' 
+    }
+  ],
+  serverId: [
+    { required: true, message: '请输入服务器ID', trigger: 'blur' },
+    { min: 3, max: 20, message: '长度应为3-20个字符', trigger: 'blur' }
+  ],
   privateKey: [
     { required: true, message: '请输入私钥', trigger: 'blur' },
     { min: 16, message: '私钥长度不能小于16个字符', trigger: 'blur' }
@@ -329,6 +432,35 @@ const addressPagination = reactive({
   pageSize: 10,
   total: 0
 })
+
+// 转账地址弹窗相关
+const transferAddressDialogVisible = ref(false)
+const transferAddressList = ref<TransferAddress[]>([])
+const transferAddressPagination = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 新增转账地址弹窗相关
+const addTransferAddressDialogVisible = ref(false)
+const transferAddressFormRef = ref<FormInstance>()
+const transferAddressSubmitLoading = ref(false)
+const transferAddressForm = reactive({
+  chain: '',
+  toAddress: ''
+})
+
+// 转账地址表单校验规则
+const transferAddressRules = {
+  chain: [
+    { required: true, message: '请选择公链', trigger: 'change' }
+  ],
+  toAddress: [
+    { required: true, message: '请输入to地址', trigger: 'blur' },
+    { min: 10, message: '地址长度不能少于10个字符', trigger: 'blur' }
+  ]
+}
 
 // 路由相关
 const route = useRoute()
@@ -475,6 +607,17 @@ const handleCommand = (command: string) => {
     confirmBatchDisable()
   } else if (command === 'batchDelete') {
     confirmBatchDelete()
+  }
+}
+
+// 行操作下拉菜单命令处理
+const handleRowCommand = (command: string, row: Customer) => {
+  if (command === 'edit') {
+    handleEdit(row)
+  } else if (command === 'transfer') {
+    openTransferAddressDialog(row)
+  } else if (command === 'delete') {
+    confirmDelete(row)
   }
 }
 
@@ -668,6 +811,8 @@ const resetForm = () => {
   form.id = ''
   form.name = ''
   form.callbackUrl = ''
+  form.notifyUrl = ''
+  form.serverId = ''
   form.privateKey = ''
   form.status = true
   
@@ -749,6 +894,116 @@ const confirmDeleteAddress = (row: any) => {
     .catch(() => {
       // 用户点击取消，不执行任何操作
     })
+}
+
+// 打开转账地址弹窗
+const openTransferAddressDialog = (row: Customer) => {
+  currentCustomer.value = row
+  transferAddressDialogVisible.value = true
+  fetchTransferAddressList()
+}
+
+// 获取转账地址列表
+const fetchTransferAddressList = () => {
+  // 模拟数据 - 实际项目中应该调用API
+  const mockData: TransferAddress[] = [
+    {
+      id: '1',
+      chain: 'TRX',
+      toAddress: 'TJ9qVk6eg7sQeJefY6ad4cWSM...',
+      addTime: '2025-08-31 20:11:13'
+    },
+    {
+      id: '2',
+      chain: 'POLYGON',
+      toAddress: '0xf27aE1e40D6D53Af4272D5B4...',
+      addTime: '2025-08-31 20:11:41'
+    }
+  ]
+  
+  transferAddressList.value = mockData.slice(
+    (transferAddressPagination.pageNum - 1) * transferAddressPagination.pageSize,
+    transferAddressPagination.pageNum * transferAddressPagination.pageSize
+  )
+  transferAddressPagination.total = mockData.length
+}
+
+// 打开新增转账地址弹窗
+const openAddTransferAddressDialog = () => {
+  addTransferAddressDialogVisible.value = true
+}
+
+// 提交转账地址表单
+const submitTransferAddressForm = async () => {
+  if (!transferAddressFormRef.value) return
+  
+  await transferAddressFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    transferAddressSubmitLoading.value = true
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      ElMessage.success('添加成功')
+      addTransferAddressDialogVisible.value = false
+      fetchTransferAddressList()
+    } catch (error) {
+      console.error('添加失败', error)
+      ElMessage.error('添加失败')
+    } finally {
+      transferAddressSubmitLoading.value = false
+    }
+  })
+}
+
+// 重置转账地址表单
+const resetTransferAddressForm = () => {
+  transferAddressForm.chain = ''
+  transferAddressForm.toAddress = ''
+  
+  if (transferAddressFormRef.value) {
+    transferAddressFormRef.value.resetFields()
+  }
+}
+
+// 删除转账地址
+const deleteTransferAddress = (row: TransferAddress) => {
+  ElMessage.success('删除成功')
+  fetchTransferAddressList()
+}
+
+// 确认删除转账地址
+const confirmDeleteTransferAddress = (row: TransferAddress) => {
+  ElMessageBox.confirm(
+    '确定要删除这个转账地址吗？',
+    '系统提示',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+      center: false,
+      roundButton: true,
+    }
+  )
+    .then(() => {
+      deleteTransferAddress(row)
+    })
+    .catch(() => {
+      // 用户点击取消，不执行任何操作
+    })
+}
+
+// 转账地址分页事件处理
+const handleTransferAddressSizeChange = (size: number) => {
+  transferAddressPagination.pageSize = size
+  fetchTransferAddressList()
+}
+
+const handleTransferAddressCurrentChange = (current: number) => {
+  transferAddressPagination.pageNum = current
+  fetchTransferAddressList()
 }
 
 // 生命周期

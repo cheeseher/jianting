@@ -297,7 +297,9 @@ export const customerList: Customer[] = [
     id: '100001',
     name: '张三',
     monitorAddressCount: 20,
+    serverId: 'SERVER-001',
     callbackUrl: 'https://example1.com',
+    notifyUrl: 'https://notify1.example.com',
     privateKey: 'abcd1234efgh5678ijkl9012mnop3456',
     status: true,
     updateTime: '2024-09-27 15:00'
@@ -306,7 +308,9 @@ export const customerList: Customer[] = [
     id: '100002',
     name: '李四',
     monitorAddressCount: 100,
+    serverId: 'SERVER-002',
     callbackUrl: 'https://example2.com',
+    notifyUrl: 'https://notify2.example.com',
     privateKey: 'qrst7890uvwx1234yz562abcdef3478',
     status: true,
     updateTime: '2024-09-27 15:00'
@@ -315,7 +319,9 @@ export const customerList: Customer[] = [
     id: '100003',
     name: '王五',
     monitorAddressCount: 0,
+    serverId: 'SERVER-003',
     callbackUrl: 'https://example3.com',
+    notifyUrl: 'https://notify3.example.com',
     privateKey: 'ghij5678klmn9012opqr3456stuv7890',
     status: false,
     updateTime: '2024-09-27 15:00'
@@ -324,7 +330,9 @@ export const customerList: Customer[] = [
     id: '100004',
     name: '赵六',
     monitorAddressCount: 1000,
+    serverId: 'SERVER-004',
     callbackUrl: 'https://example4.com',
+    notifyUrl: 'https://notify4.example.com',
     privateKey: 'wxyz1234abcd5678efgh9012ijkl3456',
     status: true,
     updateTime: '2024-09-27 15:00'

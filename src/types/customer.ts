@@ -3,10 +3,20 @@ export interface Customer {
   id: string;          // 客户ID
   name: string;        // 客户名称
   monitorAddressCount: number;  // 监听地址数量
+  serverId?: string;   // 服务器ID
   callbackUrl: string; // 回调地址
+  notifyUrl?: string;  // 通知地址
   privateKey: string;  // 私钥
   status: boolean;     // 状态
   updateTime: string;  // 更新时间
+}
+
+// 转账地址类型
+export interface TransferAddress {
+  id: string;          // 地址ID
+  chain: string;       // 公链
+  toAddress: string;   // to地址
+  addTime: string;     // 添加时间
 }
 
 // 客户列表查询参数
